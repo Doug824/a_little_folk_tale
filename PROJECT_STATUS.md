@@ -50,6 +50,36 @@ This structure is production-ready and includes:
 - Comments for complex sections
 - Proper null checking and error handling
 
+### ✅ NEW: Prototype Testing Framework Added!
+
+**Code-First Development Setup:**
+- **TestSceneSetup** - Automatically generates test environment with Unity primitives
+- **DebugUI** - Real-time player stats monitoring (Health, Stamina, Position, Input)
+- **Enhanced PlayerController** - Ready for immediate testing and iteration
+- **TestScene.unity** - Complete test scene ready to run
+
+**How to Test in Unity:**
+1. Open Unity project with this folder structure
+2. Load `Assets/_Project/Scenes/TestScene.unity`
+3. Press Play - everything auto-spawns (ground, player, enemies, walls)
+4. **Controls**: WASD/Left Stick (move), Space/B (roll), Left Click/X (attack)
+5. **Debug Info**: Press F1 to toggle stats overlay
+6. **Camera**: Diablo-style fixed-angle automatically follows player
+
+**What Auto-Generates:**
+- Green ground plane (20x20 units)
+- Blue capsule player with CharacterController
+- Red cube enemies for combat testing
+- Gray boundary walls
+- Camera positioned at optimal Diablo-style angle
+
+**Perfect for:**
+- Testing movement feel and responsiveness
+- Iterating on combat mechanics
+- Adjusting camera angles and follow behavior
+- Controller input validation
+- Performance testing with multiple enemies
+
 You can now open Unity, create a new URP project, and copy these files in to get started immediately!
 
 ---
@@ -79,24 +109,31 @@ You can now open Unity, create a new URP project, and copy these files in to get
 
 ## 📋 Next Development Steps
 
-### Immediate Tasks:
-1. **Unity Project Setup**
-   - Create new Unity project with URP template
-   - Import all generated files
-   - Configure project settings
-   - Test basic scene flow
+### ✅ COMPLETED: Prototype Framework
+- Unity project structure with all core scripts
+- TestScene.unity with auto-setup system
+- Player movement, combat, and camera systems
+- Debug UI for real-time testing
+- Ready for immediate Unity testing
 
-2. **Asset Creation Pipeline**
+### Current Priority Tasks:
+1. **Unity Integration & Testing**
+   - Load project in Unity 2022.3 LTS
+   - Test TestScene.unity prototype
+   - Verify controller input responsiveness
+   - Fine-tune movement speed and camera feel
+
+2. **Core Mechanics Refinement**
+   - Adjust combat timing and feedback
+   - Polish rolling/dodge mechanics
+   - Add hit effects and sound placeholders
+   - Test stamina system balance
+
+3. **Asset Creation Pipeline**
    - Set up Blender export settings
    - Create player character proxy
    - Design tutorial path layout
    - Build Thistle Hollow greybox
-
-3. **Core Mechanics Implementation**
-   - Test movement and camera
-   - Implement basic combat
-   - Create first lantern checkpoint
-   - Add dialogue triggers
 
 ### Future Milestones:
 - Replace placeholder assets with custom models
@@ -179,4 +216,28 @@ You can now open Unity, create a new URP project, and copy these files in to get
 
 ---
 
-Last Updated: 2025-07-02
+## 🚀 Quick Start Guide
+
+### For Immediate Testing:
+1. **Clone Repository**: `git clone https://github.com/Doug824/a_little_folk_tale.git`
+2. **Open Unity**: Create new URP project, import all files
+3. **Load TestScene**: Open `Assets/_Project/Scenes/TestScene.unity`
+4. **Press Play**: Auto-setup creates full test environment
+5. **Test Controls**: WASD (move), Space (roll), Left Click (attack), F1 (debug)
+
+### Key Files for Development:
+- **Player Logic**: `Assets/_Project/Scripts/Characters/PlayerController.cs`
+- **Camera**: `Assets/_Project/Scripts/Core/CameraController.cs`
+- **Test Setup**: `Assets/_Project/Scripts/Core/TestSceneSetup.cs`
+- **Debug UI**: `Assets/_Project/Scripts/UI/DebugUI.cs`
+- **Input Config**: `Assets/_Project/PlayerInputActions.inputactions`
+
+### Development Guidelines:
+- Follow `CLAUDE.md` for commit practices
+- Use `ALF/` branch naming convention
+- Test with controller first, keyboard second
+- Commit frequently during development
+
+---
+
+Last Updated: 2025-07-06
