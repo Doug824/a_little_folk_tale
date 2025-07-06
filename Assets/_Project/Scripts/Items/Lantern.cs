@@ -1,6 +1,5 @@
 using UnityEngine;
 using ALittleFolkTale.Characters;
-using ALittleFolkTale.SaveSystem;
 
 namespace ALittleFolkTale.Items
 {
