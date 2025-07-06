@@ -47,7 +47,16 @@ namespace ALittleFolkTale.Characters
             characterController = GetComponent<CharacterController>();
             animator = GetComponentInChildren<Animator>();
             mainCamera = Camera.main;
-            playerInput = GetComponent<PlayerInput>();
+            
+            // Create PlayerInput component if it doesn't exist
+            if (GetComponent<PlayerInput>() == null)
+            {
+                playerInput = gameObject.AddComponent<PlayerInput>();
+            }
+            else
+            {
+                playerInput = GetComponent<PlayerInput>();
+            }
 
             SetupInputActions();
         }
