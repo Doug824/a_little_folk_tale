@@ -11,7 +11,7 @@ namespace ALittleFolkTale.Core
             get
             {
                 if (instance == null)
-                    instance = FindObjectOfType<AudioManager>();
+                    instance = FindFirstObjectByType<AudioManager>();
                 return instance;
             }
         }

@@ -34,7 +34,7 @@ namespace ALittleFolkTale.Dialogue
             get
             {
                 if (instance == null)
-                    instance = FindObjectOfType<DialogueSystem>();
+                    instance = FindFirstObjectByType<DialogueSystem>();
                 return instance;
             }
         }

@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using ALittleFolkTale.Characters;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace ALittleFolkTale.Core
 {
@@ -34,7 +37,7 @@ namespace ALittleFolkTale.Core
             ground.name = "Ground";
             ground.transform.position = Vector3.zero;
             ground.transform.localScale = groundScale;
-            ground.tag = "Ground";
+            // ground.tag = "Ground"; // Tag not defined yet
             
             // Add a simple material color
             Renderer renderer = ground.GetComponent<Renderer>();
@@ -64,10 +67,53 @@ namespace ALittleFolkTale.Core
             controller.height = 2;
             controller.radius = 0.5f;
 
-            // Add PlayerInput component
-            PlayerInput playerInput = player.AddComponent<PlayerInput>();
+            // Create input actions programmatically since asset loading isn't working
+            InputActionAsset inputActions = ScriptableObject.CreateInstance<InputActionAsset>();
+            inputActions.name = "PlayerInputActions";
             
-            // Add PlayerController
+            // Create Player action map
+            var playerMap = new InputActionMap("Player");
+            inputActions.AddActionMap(playerMap);
+            
+            // Create Move action
+            var moveAction = playerMap.AddAction("Move", InputActionType.Value, "<Keyboard>/wasd");
+            moveAction.AddCompositeBinding("2DVector")
+                .With("Up", "<Keyboard>/w")
+                .With("Down", "<Keyboard>/s")
+                .With("Left", "<Keyboard>/a")
+                .With("Right", "<Keyboard>/d");
+            // Add gamepad support
+            moveAction.AddBinding("<Gamepad>/leftStick");
+            
+            // Create Attack action
+            var attackAction = playerMap.AddAction("Attack", InputActionType.Button, "<Mouse>/leftButton");
+            attackAction.AddBinding("<Gamepad>/buttonWest"); // X button
+            
+            // Create Roll action
+            var rollAction = playerMap.AddAction("Roll", InputActionType.Button, "<Keyboard>/space");
+            rollAction.AddBinding("<Gamepad>/buttonEast"); // B button
+            
+            // Create Interact action
+            var interactAction = playerMap.AddAction("Interact", InputActionType.Button, "<Keyboard>/e");
+            interactAction.AddBinding("<Gamepad>/buttonSouth"); // A button
+            
+            Debug.Log("Created input actions programmatically");
+            
+            // Enable the input actions
+            inputActions.Enable();
+            playerMap.Enable();
+            
+            Debug.Log("Input actions enabled");
+            
+            // Add PlayerInput component and configure it
+            PlayerInput playerInput = player.AddComponent<PlayerInput>();
+            playerInput.actions = inputActions;
+            playerInput.defaultActionMap = "Player";
+            playerInput.enabled = true;
+            
+            Debug.Log($"PlayerInput configured with programmatic actions. Action count: {playerMap.actions.Count}");
+            
+            // Add PlayerController AFTER PlayerInput is fully configured
             PlayerController playerController = player.AddComponent<PlayerController>();
 
             Debug.Log("Player created successfully!");
@@ -80,7 +126,7 @@ namespace ALittleFolkTale.Core
             {
                 GameObject enemy = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 enemy.name = $"TestEnemy_{i}";
-                enemy.tag = "Enemy";
+                // enemy.tag = "Enemy"; // Tag not defined yet
                 enemy.transform.position = new Vector3(Random.Range(-5f, 5f), 1, Random.Range(-5f, 5f));
                 enemy.GetComponent<Renderer>().material.color = Color.red;
             }
@@ -110,7 +156,7 @@ namespace ALittleFolkTale.Core
                 wall.transform.position = wallPositions[i];
                 wall.transform.localScale = wallScales[i];
                 wall.GetComponent<Renderer>().material.color = new Color(0.5f, 0.5f, 0.5f);
-                wall.tag = "Wall";
+                // wall.tag = "Wall"; // Tag not defined yet
             }
         }
 

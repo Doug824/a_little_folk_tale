@@ -1,5 +1,6 @@
 using UnityEngine;
 using ALittleFolkTale.Characters;
+using ALittleFolkTale.Core;
 
 namespace ALittleFolkTale.Items
 {
@@ -81,7 +82,7 @@ namespace ALittleFolkTale.Items
         private void SaveGame()
         {
             Debug.Log($"Game saved at lantern: {lanternID}");
-            Core.GameManager.Instance.SaveGame();
+            GameManager.Instance.SaveGame();
         }
         
         public void SetLitState(bool lit)
