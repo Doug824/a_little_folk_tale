@@ -24,6 +24,7 @@ namespace ALittleFolkTale.Characters
         
         [Header("Debug Visualization")]
         [SerializeField] private bool showAttackRangeDebug = false;
+        [SerializeField] private bool showDirectionArrow = true;
 
         [Header("Stats")]
         [SerializeField] private int maxHealth = 100;
@@ -47,6 +48,8 @@ namespace ALittleFolkTale.Characters
         private float attackTimer = 0f;
         private float attackDurationTimer = 0f;
         private float staminaRegenTimer = 0f;
+        
+        private GameObject persistentDirectionArrow;
 
         private PlayerInput playerInput;
         private InputAction moveAction;
@@ -80,6 +83,12 @@ namespace ALittleFolkTale.Characters
             
             // Setup input actions after everything is initialized
             SetupInputActions();
+            
+            // Create persistent direction arrow
+            if (showDirectionArrow)
+            {
+                CreatePersistentDirectionArrow();
+            }
         }
 
         private void SetupInputActions()
@@ -131,6 +140,7 @@ namespace ALittleFolkTale.Characters
             HandleRotation();
             UpdateTimers();
             RegenerateStamina();
+            UpdatePersistentDirectionArrow();
         }
 
         private void HandleMovementInput()
@@ -467,8 +477,7 @@ namespace ALittleFolkTale.Characters
             // Animate the range effect
             StartCoroutine(AnimateAttackRange(rangeEffect));
             
-            // Create direction arrow
-            CreateDirectionArrow();
+            // Don't create direction arrow on attack anymore - it's persistent now
         }
         
         private GameObject CreateAttackCone(Vector3 attackPosition)
@@ -506,38 +515,57 @@ namespace ALittleFolkTale.Characters
             return coneParent;
         }
         
-        private void CreateDirectionArrow()
+        private void CreatePersistentDirectionArrow()
         {
-            // Create direction arrow
-            GameObject arrow = new GameObject("DirectionArrow");
-            arrow.transform.position = transform.position + Vector3.up * 2.5f;
-            arrow.transform.rotation = transform.rotation;
+            // Create persistent direction arrow
+            persistentDirectionArrow = new GameObject("PersistentDirectionArrow");
+            persistentDirectionArrow.transform.position = transform.position + Vector3.up * 2.5f;
+            persistentDirectionArrow.transform.rotation = transform.rotation;
             
             // Arrow shaft
             GameObject shaft = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            shaft.transform.SetParent(arrow.transform);
+            shaft.transform.SetParent(persistentDirectionArrow.transform);
             shaft.transform.localPosition = Vector3.forward * 0.3f;
             shaft.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            shaft.transform.localScale = new Vector3(0.1f, 0.3f, 0.1f);
+            shaft.transform.localScale = new Vector3(0.08f, 0.25f, 0.08f);
             
             // Arrow head (using cube as pyramid doesn't exist)
             GameObject head = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            head.transform.SetParent(arrow.transform);
-            head.transform.localPosition = Vector3.forward * 0.6f;
+            head.transform.SetParent(persistentDirectionArrow.transform);
+            head.transform.localPosition = Vector3.forward * 0.5f;
             head.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            head.transform.localScale = new Vector3(0.2f, 0.1f, 0.3f);
+            head.transform.localScale = new Vector3(0.15f, 0.08f, 0.25f);
             
-            // Color the arrow green
-            shaft.GetComponent<Renderer>().material.color = Color.green;
-            head.GetComponent<Renderer>().material.color = Color.green;
+            // Color the arrow cyan for better visibility against green ground
+            shaft.GetComponent<Renderer>().material.color = Color.cyan;
+            head.GetComponent<Renderer>().material.color = Color.cyan;
             
             // Clean up colliders
             Destroy(shaft.GetComponent<Collider>());
             Destroy(head.GetComponent<Collider>());
-            
-            // Animate and destroy
-            StartCoroutine(AnimateDirectionArrow(arrow));
         }
+        
+        private void UpdatePersistentDirectionArrow()
+        {
+            if (persistentDirectionArrow != null && showDirectionArrow)
+            {
+                // Update position and rotation to follow player
+                persistentDirectionArrow.transform.position = transform.position + Vector3.up * 2.5f;
+                persistentDirectionArrow.transform.rotation = transform.rotation;
+            }
+            else if (persistentDirectionArrow == null && showDirectionArrow)
+            {
+                // Create arrow if it doesn't exist but should
+                CreatePersistentDirectionArrow();
+            }
+            else if (persistentDirectionArrow != null && !showDirectionArrow)
+            {
+                // Destroy arrow if it exists but shouldn't
+                Destroy(persistentDirectionArrow);
+                persistentDirectionArrow = null;
+            }
+        }
+        
         
         private System.Collections.IEnumerator AnimateAttackRange(GameObject effect)
         {
@@ -567,41 +595,6 @@ namespace ALittleFolkTale.Characters
             Destroy(effect);
         }
         
-        private System.Collections.IEnumerator AnimateDirectionArrow(GameObject arrow)
-        {
-            float duration = 0.5f;
-            float elapsed = 0f;
-            Vector3 startPos = arrow.transform.position;
-            
-            // Get renderers
-            Renderer[] renderers = arrow.GetComponentsInChildren<Renderer>();
-            Color[] startColors = new Color[renderers.Length];
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                startColors[i] = renderers[i].material.color;
-            }
-            
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float progress = elapsed / duration;
-                
-                // Float upward slightly
-                arrow.transform.position = startPos + Vector3.up * (progress * 0.5f);
-                
-                // Fade out
-                for (int i = 0; i < renderers.Length; i++)
-                {
-                    Color color = startColors[i];
-                    color.a = 1f - progress;
-                    renderers[i].material.color = color;
-                }
-                
-                yield return null;
-            }
-            
-            Destroy(arrow);
-        }
         
         private void CreateHitEffect(Vector3 position)
         {
@@ -757,7 +750,7 @@ namespace ALittleFolkTale.Characters
                 Gizmos.DrawLine(transform.position, coneCenter);
                 
                 // Draw direction arrow
-                Gizmos.color = Color.green;
+                Gizmos.color = Color.cyan;
                 Vector3 arrowPos = transform.position + Vector3.up * 2.5f;
                 Vector3 arrowEnd = arrowPos + transform.forward * 0.8f;
                 Gizmos.DrawLine(arrowPos, arrowEnd);
@@ -793,6 +786,12 @@ namespace ALittleFolkTale.Characters
             if (attackAction != null) attackAction.performed -= OnAttack;
             if (rollAction != null) rollAction.performed -= OnRoll;
             if (interactAction != null) interactAction.performed -= OnInteract;
+            
+            // Clean up persistent direction arrow
+            if (persistentDirectionArrow != null)
+            {
+                Destroy(persistentDirectionArrow);
+            }
         }
     }
 
