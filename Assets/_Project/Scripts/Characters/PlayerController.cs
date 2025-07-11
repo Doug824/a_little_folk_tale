@@ -461,16 +461,37 @@ namespace ALittleFolkTale.Characters
         
         private void CreateAttackRangeEffect(Vector3 attackPosition)
         {
-            // Create attack range visualization
-            GameObject rangeEffect = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            rangeEffect.name = "AttackRangeEffect";
-            rangeEffect.transform.position = attackPosition;
-            rangeEffect.transform.localScale = Vector3.one * attackRange * 2f; // Diameter = range * 2
+            // Create attack cone visualization
+            GameObject rangeEffect = CreateAttackCone(attackPosition);
             
-            Renderer renderer = rangeEffect.GetComponent<Renderer>();
-            renderer.material.color = new Color(1f, 0.5f, 0f, 0.3f); // Orange, semi-transparent
+            // Animate the range effect
+            StartCoroutine(AnimateAttackRange(rangeEffect));
             
-            // Make it a wireframe-like effect
+            // Create direction arrow
+            CreateDirectionArrow();
+        }
+        
+        private GameObject CreateAttackCone(Vector3 attackPosition)
+        {
+            // Create parent object for the cone effect
+            GameObject coneParent = new GameObject("AttackConeEffect");
+            coneParent.transform.position = transform.position;
+            coneParent.transform.rotation = transform.rotation;
+            
+            // Create cone using a cylinder primitive stretched forward
+            GameObject cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cone.transform.SetParent(coneParent.transform);
+            cone.name = "AttackCone";
+            
+            // Position and scale the cone
+            cone.transform.localPosition = Vector3.forward * attackRange * 0.5f;
+            cone.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Rotate to point forward
+            cone.transform.localScale = new Vector3(attackRange * 1.5f, attackRange * 0.7f, attackRange * 1.5f);
+            
+            Renderer renderer = cone.GetComponent<Renderer>();
+            renderer.material.color = new Color(1f, 0.3f, 0f, 0.2f); // Orange, more transparent
+            
+            // Make it transparent
             renderer.material.SetFloat("_Mode", 3); // Transparent mode
             renderer.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             renderer.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
@@ -480,38 +501,110 @@ namespace ALittleFolkTale.Characters
             renderer.material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
             renderer.material.renderQueue = 3000;
             
-            // Animate the range effect
-            StartCoroutine(AnimateAttackRange(rangeEffect));
+            Destroy(cone.GetComponent<Collider>());
             
-            Destroy(rangeEffect.GetComponent<Collider>());
+            return coneParent;
+        }
+        
+        private void CreateDirectionArrow()
+        {
+            // Create direction arrow
+            GameObject arrow = new GameObject("DirectionArrow");
+            arrow.transform.position = transform.position + Vector3.up * 2.5f;
+            arrow.transform.rotation = transform.rotation;
+            
+            // Arrow shaft
+            GameObject shaft = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            shaft.transform.SetParent(arrow.transform);
+            shaft.transform.localPosition = Vector3.forward * 0.3f;
+            shaft.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            shaft.transform.localScale = new Vector3(0.1f, 0.3f, 0.1f);
+            
+            // Arrow head
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Pyramid);
+            if (head == null) // Fallback if Pyramid not available
+            {
+                head = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                head.transform.localScale = new Vector3(0.2f, 0.1f, 0.3f);
+            }
+            head.transform.SetParent(arrow.transform);
+            head.transform.localPosition = Vector3.forward * 0.6f;
+            head.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            
+            // Color the arrow green
+            shaft.GetComponent<Renderer>().material.color = Color.green;
+            head.GetComponent<Renderer>().material.color = Color.green;
+            
+            // Clean up colliders
+            Destroy(shaft.GetComponent<Collider>());
+            Destroy(head.GetComponent<Collider>());
+            
+            // Animate and destroy
+            StartCoroutine(AnimateDirectionArrow(arrow));
         }
         
         private System.Collections.IEnumerator AnimateAttackRange(GameObject effect)
         {
-            float duration = 0.2f;
+            float duration = 0.3f;
             float elapsed = 0f;
-            Vector3 startScale = effect.transform.localScale;
-            Renderer renderer = effect.GetComponent<Renderer>();
-            Color startColor = renderer.material.color;
+            
+            // Get the cone renderer (child object)
+            Renderer coneRenderer = effect.GetComponentInChildren<Renderer>();
+            if (coneRenderer != null)
+            {
+                Color startColor = coneRenderer.material.color;
+                
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float progress = elapsed / duration;
+                    
+                    // Fade out
+                    Color color = startColor;
+                    color.a = startColor.a * (1f - progress);
+                    coneRenderer.material.color = color;
+                    
+                    yield return null;
+                }
+            }
+            
+            Destroy(effect);
+        }
+        
+        private System.Collections.IEnumerator AnimateDirectionArrow(GameObject arrow)
+        {
+            float duration = 0.5f;
+            float elapsed = 0f;
+            Vector3 startPos = arrow.transform.position;
+            
+            // Get renderers
+            Renderer[] renderers = arrow.GetComponentsInChildren<Renderer>();
+            Color[] startColors = new Color[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                startColors[i] = renderers[i].material.color;
+            }
             
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
                 float progress = elapsed / duration;
                 
-                // Quick scale up then fade
-                float scale = 1f + (progress * 0.2f);
-                effect.transform.localScale = startScale * scale;
+                // Float upward slightly
+                arrow.transform.position = startPos + Vector3.up * (progress * 0.5f);
                 
                 // Fade out
-                Color color = startColor;
-                color.a = startColor.a * (1f - progress);
-                renderer.material.color = color;
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Color color = startColors[i];
+                    color.a = 1f - progress;
+                    renderers[i].material.color = color;
+                }
                 
                 yield return null;
             }
             
-            Destroy(effect);
+            Destroy(arrow);
         }
         
         private void CreateHitEffect(Vector3 position)
@@ -644,14 +737,58 @@ namespace ALittleFolkTale.Characters
         {
             if (showAttackRangeDebug)
             {
-                // Draw attack range in scene view
+                // Draw attack cone visualization
                 Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f);
-                Vector3 attackPos = transform.position + transform.forward * attackRange * 0.5f;
-                Gizmos.DrawSphere(attackPos, attackRange);
                 
-                // Draw forward direction
+                // Draw cone outline
+                Vector3 coneCenter = transform.position + transform.forward * attackRange * 0.5f;
+                float coneRadius = attackRange * 0.75f;
+                
+                // Draw the cone base circle
+                DrawWireCircle(coneCenter, coneRadius, transform.up);
+                
+                // Draw cone lines from player to circle edge
+                Vector3 right = transform.right * coneRadius;
+                Vector3 up = transform.up * coneRadius;
+                
+                Gizmos.DrawLine(transform.position, coneCenter + right);
+                Gizmos.DrawLine(transform.position, coneCenter - right);
+                Gizmos.DrawLine(transform.position, coneCenter + up);
+                Gizmos.DrawLine(transform.position, coneCenter - up);
+                
+                // Draw center line
                 Gizmos.color = Color.red;
-                Gizmos.DrawLine(transform.position, transform.position + transform.forward * attackRange);
+                Gizmos.DrawLine(transform.position, coneCenter);
+                
+                // Draw direction arrow
+                Gizmos.color = Color.green;
+                Vector3 arrowPos = transform.position + Vector3.up * 2.5f;
+                Vector3 arrowEnd = arrowPos + transform.forward * 0.8f;
+                Gizmos.DrawLine(arrowPos, arrowEnd);
+                
+                // Arrow head
+                Vector3 arrowLeft = arrowEnd - transform.forward * 0.2f + transform.right * 0.1f;
+                Vector3 arrowRight = arrowEnd - transform.forward * 0.2f - transform.right * 0.1f;
+                Gizmos.DrawLine(arrowEnd, arrowLeft);
+                Gizmos.DrawLine(arrowEnd, arrowRight);
+            }
+        }
+        
+        private void DrawWireCircle(Vector3 center, float radius, Vector3 normal)
+        {
+            Vector3 right = Vector3.Cross(normal, Vector3.forward).normalized;
+            if (right == Vector3.zero) right = Vector3.Cross(normal, Vector3.up).normalized;
+            Vector3 forward = Vector3.Cross(right, normal).normalized;
+            
+            int segments = 20;
+            Vector3 prevPoint = center + right * radius;
+            
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = (float)i / segments * Mathf.PI * 2f;
+                Vector3 point = center + (right * Mathf.Cos(angle) + forward * Mathf.Sin(angle)) * radius;
+                Gizmos.DrawLine(prevPoint, point);
+                prevPoint = point;
             }
         }
 
