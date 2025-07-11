@@ -58,25 +58,57 @@ namespace ALittleFolkTale.Characters
                 playerInput = GetComponent<PlayerInput>();
             }
 
-            SetupInputActions();
+            // Don't setup input actions here - wait for Start()
         }
 
         private void Start()
         {
             currentHealth = maxHealth;
             currentStamina = maxStamina;
+            
+            // Setup input actions after everything is initialized
+            SetupInputActions();
         }
 
         private void SetupInputActions()
         {
-            moveAction = playerInput.actions["Move"];
-            attackAction = playerInput.actions["Attack"];
-            rollAction = playerInput.actions["Roll"];
-            interactAction = playerInput.actions["Interact"];
+            Debug.Log("Setting up input actions...");
+            
+            if (playerInput == null)
+            {
+                Debug.LogError("PlayerInput component is null!");
+                return;
+            }
+            
+            if (playerInput.actions == null)
+            {
+                Debug.LogError("PlayerInput.actions is null!");
+                return;
+            }
+            
+            Debug.Log($"PlayerInput found with {playerInput.actions.actionMaps.Count} action maps");
+            
+            try
+            {
+                moveAction = playerInput.actions["Move"];
+                attackAction = playerInput.actions["Attack"];
+                rollAction = playerInput.actions["Roll"];
+                interactAction = playerInput.actions["Interact"];
+                
+                Debug.Log("All input actions found successfully!");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error setting up input actions: {e.Message}");
+                return;
+            }
 
-            attackAction.performed += OnAttack;
-            rollAction.performed += OnRoll;
-            interactAction.performed += OnInteract;
+            // Use lambda expressions to avoid method resolution issues
+            attackAction.performed += ctx => OnAttack(ctx);
+            rollAction.performed += ctx => OnRoll(ctx);
+            interactAction.performed += ctx => OnInteract(ctx);
+            
+            Debug.Log("Input action callbacks subscribed successfully");
         }
 
         private void Update()
@@ -90,8 +122,28 @@ namespace ALittleFolkTale.Characters
 
         private void HandleMovementInput()
         {
-            movementInput = moveAction.ReadValue<Vector2>();
+            // Use keyboard input directly (WASD)
+            Vector2 keyboardInput = Vector2.zero;
+            if (Input.GetKey(KeyCode.W)) keyboardInput.y += 1f;
+            if (Input.GetKey(KeyCode.S)) keyboardInput.y -= 1f;
+            if (Input.GetKey(KeyCode.A)) keyboardInput.x -= 1f;
+            if (Input.GetKey(KeyCode.D)) keyboardInput.x += 1f;
             
+            movementInput = keyboardInput;
+            
+            // Try Input System if available and no keyboard input
+            if (movementInput.magnitude <= 0.1f && moveAction != null)
+            {
+                movementInput = moveAction.ReadValue<Vector2>();
+            }
+            
+            if (mainCamera == null)
+            {
+                movementDirection = Vector3.zero;
+                return;
+            }
+            
+            // Calculate movement direction relative to camera
             Vector3 forward = mainCamera.transform.forward;
             Vector3 right = mainCamera.transform.right;
             
@@ -105,13 +157,16 @@ namespace ALittleFolkTale.Characters
 
         private void HandleMovement()
         {
+            if (characterController == null) return;
+            
             if (isRolling)
             {
                 characterController.Move(transform.forward * rollSpeed * Time.deltaTime);
             }
             else if (movementDirection.magnitude > 0.1f)
             {
-                characterController.Move(movementDirection * moveSpeed * Time.deltaTime);
+                Vector3 movement = movementDirection * moveSpeed * Time.deltaTime;
+                characterController.Move(movement);
                 
                 if (animator != null)
                 {
