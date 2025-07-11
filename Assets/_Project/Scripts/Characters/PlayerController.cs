@@ -123,6 +123,7 @@ namespace ALittleFolkTale.Characters
         private void Update()
         {
             HandleMovementInput();
+            HandleDirectInput(); // Add direct keyboard input fallback
             HandleMovement();
             HandleRotation();
             UpdateTimers();
@@ -162,6 +163,87 @@ namespace ALittleFolkTale.Characters
             right.Normalize();
 
             movementDirection = forward * movementInput.y + right * movementInput.x;
+        }
+        
+        private void HandleDirectInput()
+        {
+            // Direct keyboard input fallback for combat actions
+            if (Input.GetMouseButtonDown(0)) // Left mouse button
+            {
+                TryAttack();
+            }
+            
+            if (Input.GetKeyDown(KeyCode.Space)) // Space key
+            {
+                TryRoll();
+            }
+            
+            if (Input.GetKeyDown(KeyCode.E)) // E key
+            {
+                TryInteract();
+            }
+        }
+        
+        private void TryAttack()
+        {
+            if (attackTimer <= 0f && currentStamina >= attackStaminaCost && !isRolling && !isAttacking)
+            {
+                Debug.Log("🗡️ Player attacked!");
+                PerformAttack();
+                currentStamina -= attackStaminaCost;
+                attackTimer = attackCooldown;
+                isAttacking = true;
+                attackDurationTimer = attackDuration;
+                staminaRegenTimer = staminaRegenDelay;
+                
+                if (animator != null)
+                {
+                    animator.SetBool("IsAttacking", true);
+                }
+            }
+            else
+            {
+                Debug.Log($"❌ Attack blocked - Timer:{attackTimer:F1} Stamina:{currentStamina:F0}/{attackStaminaCost} Rolling:{isRolling} Attacking:{isAttacking}");
+            }
+        }
+        
+        private void TryRoll()
+        {
+            if (!isRolling && rollCooldownTimer <= 0f && currentStamina >= rollStaminaCost && movementDirection.magnitude > 0.1f)
+            {
+                Debug.Log("🎯 Player rolled!");
+                isRolling = true;
+                rollTimer = rollDuration;
+                rollDirection = movementDirection.normalized;
+                currentStamina -= rollStaminaCost;
+                staminaRegenTimer = staminaRegenDelay;
+                
+                // Play roll sound
+                PlaySoundPlaceholder("Player Roll", 0.4f);
+                
+                if (animator != null)
+                {
+                    animator.SetBool("IsRolling", true);
+                }
+            }
+            else
+            {
+                Debug.Log($"❌ Roll blocked - Rolling:{isRolling} Cooldown:{rollCooldownTimer:F1} Stamina:{currentStamina:F0}/{rollStaminaCost} Movement:{movementDirection.magnitude:F1}");
+            }
+        }
+        
+        private void TryInteract()
+        {
+            Collider[] colliders = Physics.OverlapSphere(transform.position, 2f);
+            foreach (Collider col in colliders)
+            {
+                IInteractable interactable = col.GetComponent<IInteractable>();
+                if (interactable != null)
+                {
+                    interactable.Interact(this);
+                    break;
+                }
+            }
         }
 
         private void HandleMovement()
