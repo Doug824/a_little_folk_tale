@@ -21,6 +21,9 @@ namespace ALittleFolkTale.Characters
         [SerializeField] private float attackDuration = 0.3f;
         [SerializeField] private float attackStaminaCost = 8f;
         [SerializeField] private float attackMovementReduction = 0.3f;
+        
+        [Header("Debug Visualization")]
+        [SerializeField] private bool showAttackRangeDebug = false;
 
         [Header("Stats")]
         [SerializeField] private int maxHealth = 100;
@@ -407,6 +410,10 @@ namespace ALittleFolkTale.Characters
 
             // Create attack area in front of player
             Vector3 attackPosition = transform.position + transform.forward * attackRange * 0.5f;
+            
+            // Show attack range visualization
+            CreateAttackRangeEffect(attackPosition);
+            
             Collider[] hitColliders = Physics.OverlapSphere(attackPosition, attackRange);
             
             bool hitSomething = false;
@@ -450,6 +457,61 @@ namespace ALittleFolkTale.Characters
             {
                 PlaySoundPlaceholder("Attack Whiff", 0.2f);
             }
+        }
+        
+        private void CreateAttackRangeEffect(Vector3 attackPosition)
+        {
+            // Create attack range visualization
+            GameObject rangeEffect = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            rangeEffect.name = "AttackRangeEffect";
+            rangeEffect.transform.position = attackPosition;
+            rangeEffect.transform.localScale = Vector3.one * attackRange * 2f; // Diameter = range * 2
+            
+            Renderer renderer = rangeEffect.GetComponent<Renderer>();
+            renderer.material.color = new Color(1f, 0.5f, 0f, 0.3f); // Orange, semi-transparent
+            
+            // Make it a wireframe-like effect
+            renderer.material.SetFloat("_Mode", 3); // Transparent mode
+            renderer.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            renderer.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            renderer.material.SetInt("_ZWrite", 0);
+            renderer.material.DisableKeyword("_ALPHATEST_ON");
+            renderer.material.EnableKeyword("_ALPHABLEND_ON");
+            renderer.material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            renderer.material.renderQueue = 3000;
+            
+            // Animate the range effect
+            StartCoroutine(AnimateAttackRange(rangeEffect));
+            
+            Destroy(rangeEffect.GetComponent<Collider>());
+        }
+        
+        private System.Collections.IEnumerator AnimateAttackRange(GameObject effect)
+        {
+            float duration = 0.2f;
+            float elapsed = 0f;
+            Vector3 startScale = effect.transform.localScale;
+            Renderer renderer = effect.GetComponent<Renderer>();
+            Color startColor = renderer.material.color;
+            
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float progress = elapsed / duration;
+                
+                // Quick scale up then fade
+                float scale = 1f + (progress * 0.2f);
+                effect.transform.localScale = startScale * scale;
+                
+                // Fade out
+                Color color = startColor;
+                color.a = startColor.a * (1f - progress);
+                renderer.material.color = color;
+                
+                yield return null;
+            }
+            
+            Destroy(effect);
         }
         
         private void CreateHitEffect(Vector3 position)
@@ -576,6 +638,21 @@ namespace ALittleFolkTale.Characters
         public float GetStaminaPercentage()
         {
             return currentStamina / maxStamina;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (showAttackRangeDebug)
+            {
+                // Draw attack range in scene view
+                Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f);
+                Vector3 attackPos = transform.position + transform.forward * attackRange * 0.5f;
+                Gizmos.DrawSphere(attackPos, attackRange);
+                
+                // Draw forward direction
+                Gizmos.color = Color.red;
+                Gizmos.DrawLine(transform.position, transform.position + transform.forward * attackRange);
+            }
         }
 
         private void OnDestroy()
