@@ -9,22 +9,26 @@ namespace ALittleFolkTale.Characters
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private float rotationSpeed = 10f;
-        [SerializeField] private float rollSpeed = 8f;
-        [SerializeField] private float rollDuration = 0.5f;
-        [SerializeField] private float rollStaminaCost = 10f;
+        [SerializeField] private float rollSpeed = 12f;
+        [SerializeField] private float rollDuration = 0.4f;
+        [SerializeField] private float rollStaminaCost = 15f;
+        [SerializeField] private float rollCooldown = 0.3f;
 
         [Header("Combat Settings")]
         [SerializeField] private float attackRange = 1.5f;
         [SerializeField] private int attackDamage = 10;
-        [SerializeField] private float attackCooldown = 0.5f;
-        [SerializeField] private float attackStaminaCost = 5f;
+        [SerializeField] private float attackCooldown = 0.8f;
+        [SerializeField] private float attackDuration = 0.3f;
+        [SerializeField] private float attackStaminaCost = 8f;
+        [SerializeField] private float attackMovementReduction = 0.3f;
 
         [Header("Stats")]
         [SerializeField] private int maxHealth = 100;
         [SerializeField] private int currentHealth;
         [SerializeField] private float maxStamina = 100f;
         [SerializeField] private float currentStamina;
-        [SerializeField] private float staminaRegenRate = 10f;
+        [SerializeField] private float staminaRegenRate = 15f;
+        [SerializeField] private float staminaRegenDelay = 1f;
 
         private CharacterController characterController;
         private Animator animator;
@@ -32,9 +36,14 @@ namespace ALittleFolkTale.Characters
 
         private Vector2 movementInput;
         private Vector3 movementDirection;
+        private Vector3 rollDirection;
         private bool isRolling = false;
+        private bool isAttacking = false;
         private float rollTimer = 0f;
+        private float rollCooldownTimer = 0f;
         private float attackTimer = 0f;
+        private float attackDurationTimer = 0f;
+        private float staminaRegenTimer = 0f;
 
         private PlayerInput playerInput;
         private InputAction moveAction;
@@ -159,18 +168,26 @@ namespace ALittleFolkTale.Characters
         {
             if (characterController == null) return;
             
+            float currentMoveSpeed = moveSpeed;
+            
+            // Reduce movement during attack
+            if (isAttacking)
+            {
+                currentMoveSpeed *= attackMovementReduction;
+            }
+            
             if (isRolling)
             {
-                characterController.Move(transform.forward * rollSpeed * Time.deltaTime);
+                characterController.Move(rollDirection * rollSpeed * Time.deltaTime);
             }
             else if (movementDirection.magnitude > 0.1f)
             {
-                Vector3 movement = movementDirection * moveSpeed * Time.deltaTime;
+                Vector3 movement = movementDirection * currentMoveSpeed * Time.deltaTime;
                 characterController.Move(movement);
                 
                 if (animator != null)
                 {
-                    animator.SetFloat("Speed", movementDirection.magnitude);
+                    animator.SetFloat("Speed", movementDirection.magnitude * (isAttacking ? 0.5f : 1f));
                 }
             }
             else
@@ -199,9 +216,23 @@ namespace ALittleFolkTale.Characters
                 if (rollTimer <= 0f)
                 {
                     isRolling = false;
+                    rollCooldownTimer = rollCooldown;
                     if (animator != null)
                     {
                         animator.SetBool("IsRolling", false);
+                    }
+                }
+            }
+
+            if (isAttacking)
+            {
+                attackDurationTimer -= Time.deltaTime;
+                if (attackDurationTimer <= 0f)
+                {
+                    isAttacking = false;
+                    if (animator != null)
+                    {
+                        animator.SetBool("IsAttacking", false);
                     }
                 }
             }
@@ -210,11 +241,21 @@ namespace ALittleFolkTale.Characters
             {
                 attackTimer -= Time.deltaTime;
             }
+            
+            if (rollCooldownTimer > 0f)
+            {
+                rollCooldownTimer -= Time.deltaTime;
+            }
+            
+            if (staminaRegenTimer > 0f)
+            {
+                staminaRegenTimer -= Time.deltaTime;
+            }
         }
 
         private void RegenerateStamina()
         {
-            if (currentStamina < maxStamina && !isRolling)
+            if (currentStamina < maxStamina && !isRolling && !isAttacking && staminaRegenTimer <= 0f)
             {
                 currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * Time.deltaTime);
             }
@@ -222,21 +263,34 @@ namespace ALittleFolkTale.Characters
 
         private void OnAttack(InputAction.CallbackContext context)
         {
-            if (attackTimer <= 0f && currentStamina >= attackStaminaCost && !isRolling)
+            if (attackTimer <= 0f && currentStamina >= attackStaminaCost && !isRolling && !isAttacking)
             {
                 PerformAttack();
                 currentStamina -= attackStaminaCost;
                 attackTimer = attackCooldown;
+                isAttacking = true;
+                attackDurationTimer = attackDuration;
+                staminaRegenTimer = staminaRegenDelay;
+                
+                if (animator != null)
+                {
+                    animator.SetBool("IsAttacking", true);
+                }
             }
         }
 
         private void OnRoll(InputAction.CallbackContext context)
         {
-            if (!isRolling && currentStamina >= rollStaminaCost && movementDirection.magnitude > 0.1f)
+            if (!isRolling && rollCooldownTimer <= 0f && currentStamina >= rollStaminaCost && movementDirection.magnitude > 0.1f)
             {
                 isRolling = true;
                 rollTimer = rollDuration;
+                rollDirection = movementDirection.normalized;
                 currentStamina -= rollStaminaCost;
+                staminaRegenTimer = staminaRegenDelay;
+                
+                // Play roll sound
+                PlaySoundPlaceholder("Player Roll", 0.4f);
                 
                 if (animator != null)
                 {
@@ -265,15 +319,105 @@ namespace ALittleFolkTale.Characters
             {
                 animator.SetTrigger("Attack");
             }
+            
+            // Play attack sound placeholder
+            PlaySoundPlaceholder("Attack Swing", 0.3f);
 
-            Collider[] hitColliders = Physics.OverlapSphere(transform.position + transform.forward * attackRange * 0.5f, attackRange);
+            // Create attack area in front of player
+            Vector3 attackPosition = transform.position + transform.forward * attackRange * 0.5f;
+            Collider[] hitColliders = Physics.OverlapSphere(attackPosition, attackRange);
+            
+            bool hitSomething = false;
             foreach (Collider col in hitColliders)
             {
                 if (col.CompareTag("Enemy"))
                 {
-                    Debug.Log($"Hit enemy: {col.name} for {attackDamage} damage");
+                    hitSomething = true;
+                    
+                    // Add impact effect
+                    CreateHitEffect(col.transform.position);
+                    
+                    // Play hit sound
+                    PlaySoundPlaceholder("Attack Hit", 0.5f);
+                    
+                    // Apply damage
+                    var enemy = col.GetComponent<Enemy>();
+                    if (enemy != null)
+                    {
+                        enemy.TakeDamage(attackDamage);
+                    }
+                    else
+                    {
+                        Debug.Log($"Hit enemy: {col.name} for {attackDamage} damage");
+                    }
+                    
+                    // Add knockback
+                    Vector3 knockbackDirection = (col.transform.position - transform.position).normalized;
+                    var rb = col.GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                        rb.AddForce(knockbackDirection * 5f, ForceMode.Impulse);
+                    }
                 }
             }
+            
+            // Play whiff sound if no hit
+            if (!hitSomething)
+            {
+                PlaySoundPlaceholder("Attack Whiff", 0.2f);
+            }
+        }
+        
+        private void CreateHitEffect(Vector3 position)
+        {
+            // Create hit impact visual effect
+            GameObject hitEffect = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            hitEffect.name = "HitEffect";
+            hitEffect.transform.position = position + Vector3.up * 0.5f;
+            hitEffect.transform.localScale = Vector3.one * 0.2f;
+            
+            Renderer renderer = hitEffect.GetComponent<Renderer>();
+            renderer.material.color = Color.yellow;
+            
+            // Animate the effect
+            StartCoroutine(AnimateHitEffect(hitEffect));
+            
+            Destroy(hitEffect.GetComponent<Collider>());
+        }
+        
+        private System.Collections.IEnumerator AnimateHitEffect(GameObject effect)
+        {
+            float duration = 0.3f;
+            float elapsed = 0f;
+            Vector3 startScale = effect.transform.localScale;
+            Color startColor = effect.GetComponent<Renderer>().material.color;
+            
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float progress = elapsed / duration;
+                
+                // Scale up then down
+                float scale = Mathf.Sin(progress * Mathf.PI) * 2f;
+                effect.transform.localScale = startScale * (1f + scale);
+                
+                // Fade out
+                Color color = startColor;
+                color.a = 1f - progress;
+                effect.GetComponent<Renderer>().material.color = color;
+                
+                yield return null;
+            }
+            
+            Destroy(effect);
+        }
+        
+        private void PlaySoundPlaceholder(string soundName, float volume)
+        {
+            Debug.Log($"🔊 SOUND: {soundName} (Volume: {volume:F1})");
+            
+            // TODO: Replace with actual AudioManager.Instance.PlaySFX(soundName, volume);
+            // For now, we'll create a simple audio placeholder system
         }
 
         public void TakeDamage(int damage)
@@ -282,10 +426,57 @@ namespace ALittleFolkTale.Characters
 
             currentHealth -= damage;
             
+            // Play damage sound and effect
+            PlaySoundPlaceholder("Player Hit", 0.6f);
+            CreateDamageEffect();
+            
+            Debug.Log($"Player took {damage} damage! Health: {currentHealth}/{maxHealth}");
+            
             if (currentHealth <= 0)
             {
                 Die();
             }
+        }
+        
+        private void CreateDamageEffect()
+        {
+            // Create damage visual effect around player
+            GameObject damageEffect = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            damageEffect.name = "DamageEffect";
+            damageEffect.transform.position = transform.position + Vector3.up;
+            damageEffect.transform.localScale = Vector3.one * 1.5f;
+            
+            Renderer renderer = damageEffect.GetComponent<Renderer>();
+            renderer.material.color = Color.red;
+            
+            StartCoroutine(AnimateDamageEffect(damageEffect));
+            
+            Destroy(damageEffect.GetComponent<Collider>());
+        }
+        
+        private System.Collections.IEnumerator AnimateDamageEffect(GameObject effect)
+        {
+            float duration = 0.4f;
+            float elapsed = 0f;
+            Renderer renderer = effect.GetComponent<Renderer>();
+            Color startColor = renderer.material.color;
+            
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float progress = elapsed / duration;
+                
+                // Expand and fade
+                effect.transform.localScale = Vector3.one * (1.5f + progress * 0.5f);
+                
+                Color color = startColor;
+                color.a = 1f - progress;
+                renderer.material.color = color;
+                
+                yield return null;
+            }
+            
+            Destroy(effect);
         }
 
         private void Die()

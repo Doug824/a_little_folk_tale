@@ -126,9 +126,19 @@ namespace ALittleFolkTale.Core
             {
                 GameObject enemy = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 enemy.name = $"TestEnemy_{i}";
-                // enemy.tag = "Enemy"; // Tag not defined yet
+                enemy.tag = "Enemy";
                 enemy.transform.position = new Vector3(Random.Range(-5f, 5f), 1, Random.Range(-5f, 5f));
                 enemy.GetComponent<Renderer>().material.color = Color.red;
+                
+                // Add Rigidbody for physics interactions
+                Rigidbody rb = enemy.AddComponent<Rigidbody>();
+                rb.mass = 1f;
+                rb.drag = 5f; // High drag to stop quickly after knockback
+                
+                // Add Enemy script for combat
+                enemy.AddComponent<ALittleFolkTale.Characters.Enemy>();
+                
+                Debug.Log($"Created enemy with combat AI: {enemy.name}");
             }
         }
 
