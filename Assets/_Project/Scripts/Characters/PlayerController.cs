@@ -520,16 +520,12 @@ namespace ALittleFolkTale.Characters
             shaft.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             shaft.transform.localScale = new Vector3(0.1f, 0.3f, 0.1f);
             
-            // Arrow head
-            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Pyramid);
-            if (head == null) // Fallback if Pyramid not available
-            {
-                head = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                head.transform.localScale = new Vector3(0.2f, 0.1f, 0.3f);
-            }
+            // Arrow head (using cube as pyramid doesn't exist)
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Cube);
             head.transform.SetParent(arrow.transform);
             head.transform.localPosition = Vector3.forward * 0.6f;
             head.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            head.transform.localScale = new Vector3(0.2f, 0.1f, 0.3f);
             
             // Color the arrow green
             shaft.GetComponent<Renderer>().material.color = Color.green;
