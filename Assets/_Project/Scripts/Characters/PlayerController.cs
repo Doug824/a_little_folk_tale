@@ -17,7 +17,7 @@ namespace ALittleFolkTale.Characters
         [Header("Combat Settings")]
         [SerializeField] private float attackRange = 1.5f;
         [SerializeField] private int attackDamage = 10;
-        [SerializeField] private float attackCooldown = 0.8f;
+        [SerializeField] private float attackCooldown = 0.3f;
         [SerializeField] private float attackDuration = 0.3f;
         [SerializeField] private float attackStaminaCost = 8f;
         [SerializeField] private float attackMovementReduction = 0.3f;
@@ -412,7 +412,9 @@ namespace ALittleFolkTale.Characters
             bool hitSomething = false;
             foreach (Collider col in hitColliders)
             {
-                if (col.CompareTag("Enemy"))
+                // Check for Enemy component instead of relying on tags
+                var enemy = col.GetComponent<Enemy>();
+                if (enemy != null || col.name.Contains("Enemy"))
                 {
                     hitSomething = true;
                     
@@ -423,10 +425,10 @@ namespace ALittleFolkTale.Characters
                     PlaySoundPlaceholder("Attack Hit", 0.5f);
                     
                     // Apply damage
-                    var enemy = col.GetComponent<Enemy>();
                     if (enemy != null)
                     {
                         enemy.TakeDamage(attackDamage);
+                        Debug.Log($"Hit {col.name} for {attackDamage} damage!");
                     }
                     else
                     {
