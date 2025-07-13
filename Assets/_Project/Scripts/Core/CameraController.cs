@@ -16,7 +16,7 @@ namespace ALittleFolkTale.Core
         
         [Header("Camera Shake")]
         [SerializeField] private float shakeDuration = 0f;
-        [SerializeField] private float shakeAmount = 0.3f;
+        [SerializeField] private float shakeAmount = 0.1f;
         [SerializeField] private float decreaseFactor = 1.0f;
 
         [Header("Bounds")]
@@ -143,12 +143,12 @@ namespace ALittleFolkTale.Core
         
         public void QuickShake()
         {
-            ShakeCamera(0.2f, 0.2f);
+            ShakeCamera(0.1f, 0.05f);
         }
         
         public void HeavyShake()
         {
-            ShakeCamera(0.5f, 0.5f);
+            ShakeCamera(0.2f, 0.1f);
         }
         
         public void UpdateCameraSettings(float? height = null, float? distance = null, float? angle = null)
