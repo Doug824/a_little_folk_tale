@@ -13,6 +13,7 @@ namespace ALittleFolkTale.Core
         [SerializeField] private float cameraDistance = 8f;
         [SerializeField] private float cameraAngle = 40f;
         [SerializeField] private float smoothSpeed = 8f;
+        [SerializeField] private float viewportOffset = 3f;
         
         [Header("Camera Shake")]
         [SerializeField] private float shakeDuration = 0f;
@@ -87,7 +88,9 @@ namespace ALittleFolkTale.Core
             float angleRad = cameraAngle * Mathf.Deg2Rad;
             float horizontalDistance = cameraDistance * Mathf.Cos(angleRad);
             
-            offset = new Vector3(0, cameraHeight, -horizontalDistance);
+            // Adjust the offset to center player better in viewport
+            // Move camera forward on Z axis to center player
+            offset = new Vector3(0, cameraHeight, -horizontalDistance + viewportOffset);
             
             transform.rotation = Quaternion.Euler(cameraAngle, 0, 0);
         }
@@ -151,11 +154,12 @@ namespace ALittleFolkTale.Core
             ShakeCamera(0.2f, 0.1f);
         }
         
-        public void UpdateCameraSettings(float? height = null, float? distance = null, float? angle = null)
+        public void UpdateCameraSettings(float? height = null, float? distance = null, float? angle = null, float? offset = null)
         {
             if (height.HasValue) cameraHeight = height.Value;
             if (distance.HasValue) cameraDistance = distance.Value;
             if (angle.HasValue) cameraAngle = angle.Value;
+            if (offset.HasValue) viewportOffset = offset.Value;
             
             CalculateOffset();
         }
