@@ -20,8 +20,8 @@ namespace ALittleFolkTale.UI
         [SerializeField] private GameObject slotPrefab;
         
         [Header("Settings")]
-        [SerializeField] private float slotSize = 80f;
-        [SerializeField] private float slotSpacing = 10f;
+        [SerializeField] private float slotSize = 120f; // Increased from 80f
+        [SerializeField] private float slotSpacing = 15f; // Increased from 10f
         [SerializeField] private int inventoryColumns = 3; // Link's Awakening style 3x3 grid
         
         private List<InventorySlotUI> inventorySlots;
@@ -174,8 +174,8 @@ namespace ALittleFolkTale.UI
             itemsSection.transform.SetParent(inventoryPanel.transform, false);
             
             RectTransform itemsRect = itemsSection.AddComponent<RectTransform>();
-            itemsRect.anchorMin = new Vector2(0.1f, 0.3f);
-            itemsRect.anchorMax = new Vector2(0.5f, 0.9f);
+            itemsRect.anchorMin = new Vector2(0.05f, 0.25f);
+            itemsRect.anchorMax = new Vector2(0.6f, 0.95f); // Made wider and taller
             itemsRect.offsetMin = Vector2.zero;
             itemsRect.offsetMax = Vector2.zero;
             
@@ -328,8 +328,8 @@ namespace ALittleFolkTale.UI
             characterPreviewPanel.transform.SetParent(inventoryPanel.transform, false);
             
             RectTransform previewRect = characterPreviewPanel.AddComponent<RectTransform>();
-            previewRect.anchorMin = new Vector2(0.55f, 0.3f);
-            previewRect.anchorMax = new Vector2(0.9f, 0.9f);
+            previewRect.anchorMin = new Vector2(0.65f, 0.25f);
+            previewRect.anchorMax = new Vector2(0.95f, 0.95f); // Adjusted to fit larger items section
             previewRect.offsetMin = Vector2.zero;
             previewRect.offsetMax = Vector2.zero;
             
@@ -415,17 +415,19 @@ namespace ALittleFolkTale.UI
             quickRect.anchorMax = new Vector2(1f, 1f);
             quickRect.pivot = new Vector2(1f, 1f);
             quickRect.anchoredPosition = new Vector2(-20, -20);
-            quickRect.sizeDelta = new Vector2(150, 80);
+            quickRect.sizeDelta = new Vector2(180, 100); // Increased panel size
             
             // Y/Q button slot
-            GameObject ySlot = CreateQuickUseSlot("Y/Q", new Vector2(-80, -40));
+            GameObject ySlot = CreateQuickUseSlot("Y/Q", new Vector2(-100, -50));
             quickUseYIcon = ySlot.transform.Find("Icon").GetComponent<Image>();
             quickUseYText = ySlot.transform.Find("QuantityText").GetComponent<Text>();
+            Debug.Log($"Created Y slot: icon={quickUseYIcon != null}, text={quickUseYText != null}");
             
             // X/E button slot
-            GameObject xSlot = CreateQuickUseSlot("X/E", new Vector2(-20, -40));
+            GameObject xSlot = CreateQuickUseSlot("X/E", new Vector2(-20, -50));
             quickUseXIcon = xSlot.transform.Find("Icon").GetComponent<Image>();
             quickUseXText = xSlot.transform.Find("QuantityText").GetComponent<Text>();
+            Debug.Log($"Created X slot: icon={quickUseXIcon != null}, text={quickUseXText != null}");
         }
         
         private InventorySlotUI CreateHotkeySlot(GameObject parent, string keyName, int slotIndex)
@@ -491,7 +493,7 @@ namespace ALittleFolkTale.UI
             
             RectTransform slotRect = slot.AddComponent<RectTransform>();
             slotRect.anchoredPosition = position;
-            slotRect.sizeDelta = new Vector2(50, 50);
+            slotRect.sizeDelta = new Vector2(70, 70); // Increased quick-use slot size
             
             Image slotBg = slot.AddComponent<Image>();
             slotBg.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
@@ -610,11 +612,11 @@ namespace ALittleFolkTale.UI
             quantityRect.anchorMin = new Vector2(1, 0);
             quantityRect.anchorMax = new Vector2(1, 0);
             quantityRect.pivot = new Vector2(1, 0);
-            quantityRect.anchoredPosition = new Vector2(-3, 3);
-            quantityRect.sizeDelta = new Vector2(25, 20);
+            quantityRect.anchoredPosition = new Vector2(-5, 5);
+            quantityRect.sizeDelta = new Vector2(35, 25); // Increased size for larger text
             
             Text quantityText = quantityObj.AddComponent<Text>();
-            quantityText.fontSize = 14;
+            quantityText.fontSize = 18; // Increased from 14
             quantityText.color = Color.yellow;
             quantityText.alignment = TextAnchor.MiddleCenter;
             quantityText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -624,7 +626,7 @@ namespace ALittleFolkTale.UI
             // Add outline for better visibility
             Outline outline = quantityObj.AddComponent<Outline>();
             outline.effectColor = Color.black;
-            outline.effectDistance = new Vector2(1, 1);
+            outline.effectDistance = new Vector2(2, 2); // Increased outline size
             
             // Add hotbar number for hotbar slots
             if (isHotbar)
@@ -678,7 +680,7 @@ namespace ALittleFolkTale.UI
             slotRect.anchorMax = new Vector2(0.5f, 0.5f);
             slotRect.pivot = new Vector2(0.5f, 0.5f);
             slotRect.anchoredPosition = position;
-            slotRect.sizeDelta = new Vector2(50, 50);
+            slotRect.sizeDelta = new Vector2(70, 70); // Increased equipment slot size
             
             Image slotImage = slotObj.AddComponent<Image>();
             slotImage.color = new Color(0.4f, 0.4f, 0.3f, 0.9f); // Link's Awakening style color
@@ -826,14 +828,33 @@ namespace ALittleFolkTale.UI
         
         private void RefreshQuickUseDisplay()
         {
-            if (playerInventory == null) return;
+            if (playerInventory == null)
+            {
+                Debug.Log("RefreshQuickUseDisplay: playerInventory is null");
+                return;
+            }
+            
+            Debug.Log("RefreshQuickUseDisplay called");
             
             // Update Y/Q slot - get from hotkey slot Q
             var hotkeySlotQ = playerInventory.GetHotkeySlotQ();
-            if (!hotkeySlotQ.IsEmpty && hotkeySlotQ.item.Data.icon != null)
+            Debug.Log($"Hotkey Q slot: IsEmpty={hotkeySlotQ.IsEmpty}, item={hotkeySlotQ.item?.Data?.itemName}, quantity={hotkeySlotQ.quantity}");
+            
+            if (!hotkeySlotQ.IsEmpty && hotkeySlotQ.item != null)
             {
-                quickUseYIcon.sprite = hotkeySlotQ.item.Data.icon;
-                quickUseYIcon.color = Color.white;
+                Debug.Log($"Setting Q icon to: {hotkeySlotQ.item.Data.itemName}, icon={hotkeySlotQ.item.Data.icon}");
+                
+                if (hotkeySlotQ.item.Data.icon != null)
+                {
+                    quickUseYIcon.sprite = hotkeySlotQ.item.Data.icon;
+                    quickUseYIcon.color = Color.white;
+                }
+                else
+                {
+                    // Use color coding if no icon
+                    quickUseYIcon.sprite = null;
+                    quickUseYIcon.color = GetItemColorForUI(hotkeySlotQ.item);
+                }
                 
                 // Show quantity if more than 1
                 if (hotkeySlotQ.quantity > 1)
@@ -847,6 +868,7 @@ namespace ALittleFolkTale.UI
             }
             else
             {
+                Debug.Log("Clearing Q slot display");
                 quickUseYIcon.sprite = null;
                 quickUseYIcon.color = Color.clear;
                 quickUseYText.text = "";
@@ -854,10 +876,21 @@ namespace ALittleFolkTale.UI
             
             // Update X/E slot - get from hotkey slot E
             var hotkeySlotE = playerInventory.GetHotkeySlotE();
-            if (!hotkeySlotE.IsEmpty && hotkeySlotE.item.Data.icon != null)
+            Debug.Log($"Hotkey E slot: IsEmpty={hotkeySlotE.IsEmpty}, item={hotkeySlotE.item?.Data?.itemName}, quantity={hotkeySlotE.quantity}");
+            
+            if (!hotkeySlotE.IsEmpty && hotkeySlotE.item != null)
             {
-                quickUseXIcon.sprite = hotkeySlotE.item.Data.icon;
-                quickUseXIcon.color = Color.white;
+                if (hotkeySlotE.item.Data.icon != null)
+                {
+                    quickUseXIcon.sprite = hotkeySlotE.item.Data.icon;
+                    quickUseXIcon.color = Color.white;
+                }
+                else
+                {
+                    // Use color coding if no icon
+                    quickUseXIcon.sprite = null;
+                    quickUseXIcon.color = GetItemColorForUI(hotkeySlotE.item);
+                }
                 
                 // Show quantity if more than 1
                 if (hotkeySlotE.quantity > 1)
@@ -874,6 +907,23 @@ namespace ALittleFolkTale.UI
                 quickUseXIcon.sprite = null;
                 quickUseXIcon.color = Color.clear;
                 quickUseXText.text = "";
+            }
+        }
+        
+        private Color GetItemColorForUI(Item item)
+        {
+            switch (item.Data.itemType)
+            {
+                case ItemType.Weapon:
+                    return new Color(1f, 0.8f, 0.6f); // Light orange
+                case ItemType.Consumable:
+                    return new Color(0.6f, 1f, 0.6f); // Light green
+                case ItemType.Equipment:
+                    return new Color(0.6f, 0.6f, 1f); // Light blue
+                case ItemType.Tool:
+                    return new Color(1f, 0.6f, 1f); // Light purple
+                default:
+                    return Color.white;
             }
         }
         
