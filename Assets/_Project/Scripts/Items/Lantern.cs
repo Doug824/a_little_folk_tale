@@ -4,7 +4,7 @@ using ALittleFolkTale.Core;
 
 namespace ALittleFolkTale.Items
 {
-    public class Lantern : MonoBehaviour, IInteractable
+    public class Lantern : MonoBehaviour, Characters.IInteractable
     {
         [Header("Lantern Settings")]
         [SerializeField] private bool isLit = false;
