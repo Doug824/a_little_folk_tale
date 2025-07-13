@@ -1,6 +1,9 @@
 using UnityEngine;
-using TMPro;
+using UnityEngine.UI;
 using System.Collections;
+#if TMP_PRESENT
+using TMPro;
+#endif
 
 namespace ALittleFolkTale.UI
 {
@@ -105,8 +108,8 @@ namespace ALittleFolkTale.UI
             );
             textObj.transform.position = worldPosition + randomOffset;
             
-            // Add TextMeshPro component
-            TextMeshPro textMesh = textObj.AddComponent<TextMeshPro>();
+            // Add Text component (fallback for TMP issues)
+            Text textMesh = textObj.AddComponent<Text>();
             
             // Configure text based on type
             switch (type)
@@ -114,23 +117,23 @@ namespace ALittleFolkTale.UI
                 case DamageType.Player:
                     textMesh.text = $"-{amount}";
                     textMesh.color = playerDamageColor;
-                    textMesh.fontSize = playerDamageSize;
+                    textMesh.fontSize = (int)playerDamageSize;
                     break;
                 case DamageType.Enemy:
                     textMesh.text = $"{amount}";
                     textMesh.color = enemyDamageColor;
-                    textMesh.fontSize = enemyDamageSize;
+                    textMesh.fontSize = (int)enemyDamageSize;
                     break;
                 case DamageType.Healing:
                     textMesh.text = $"+{amount}";
                     textMesh.color = healingColor;
-                    textMesh.fontSize = healingSize;
+                    textMesh.fontSize = (int)healingSize;
                     break;
             }
             
-            textMesh.alignment = TextAlignmentOptions.Center;
-            textMesh.fontStyle = FontStyles.Bold;
-            textMesh.sortingOrder = 100;
+            textMesh.alignment = TextAnchor.MiddleCenter;
+            textMesh.fontStyle = FontStyle.Bold;
+            textMesh.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
             // Make it face the camera
             if (mainCamera != null)

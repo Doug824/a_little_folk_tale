@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using ALittleFolkTale.Characters;
+#if TMP_PRESENT
+using TMPro;
+#endif
 
 namespace ALittleFolkTale.UI
 {
@@ -9,10 +11,10 @@ namespace ALittleFolkTale.UI
     {
         [Header("UI References")]
         [SerializeField] private Canvas debugCanvas;
-        [SerializeField] private TextMeshProUGUI healthText;
-        [SerializeField] private TextMeshProUGUI staminaText;
-        [SerializeField] private TextMeshProUGUI positionText;
-        [SerializeField] private TextMeshProUGUI inputText;
+        [SerializeField] private Text healthText;
+        [SerializeField] private Text staminaText;
+        [SerializeField] private Text positionText;
+        [SerializeField] private Text inputText;
 
         private PlayerController playerController;
 
@@ -63,12 +65,12 @@ namespace ALittleFolkTale.UI
             inputText = CreateDebugText("Input: None", panel.transform, new Vector2(10, -100));
             
             // Create instructions
-            TextMeshProUGUI instructions = CreateDebugText("WASD/Left Stick: Move\nSpace/B: Roll\nLeft Click/X: Attack", panel.transform, new Vector2(10, -130));
+            Text instructions = CreateDebugText("WASD/Left Stick: Move\nSpace/B: Roll\nLeft Click/X: Attack", panel.transform, new Vector2(10, -130));
             instructions.fontSize = 12;
             instructions.color = Color.yellow;
         }
 
-        private TextMeshProUGUI CreateDebugText(string text, Transform parent, Vector2 position)
+        private Text CreateDebugText(string text, Transform parent, Vector2 position)
         {
             GameObject textObj = new GameObject("DebugText");
             textObj.transform.SetParent(parent, false);
@@ -80,11 +82,12 @@ namespace ALittleFolkTale.UI
             textRect.anchoredPosition = position;
             textRect.sizeDelta = new Vector2(280, 30);
             
-            TextMeshProUGUI textMesh = textObj.AddComponent<TextMeshProUGUI>();
+            Text textMesh = textObj.AddComponent<Text>();
             textMesh.text = text;
             textMesh.fontSize = 14;
             textMesh.color = Color.white;
-            textMesh.fontStyle = FontStyles.Bold;
+            textMesh.fontStyle = FontStyle.Bold;
+            textMesh.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
             return textMesh;
         }

@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using ALittleFolkTale.Characters;
+#if TMP_PRESENT
+using TMPro;
+#endif
 
 namespace ALittleFolkTale.UI
 {
@@ -11,8 +13,8 @@ namespace ALittleFolkTale.UI
         [SerializeField] private Canvas hudCanvas;
         [SerializeField] private Slider healthBar;
         [SerializeField] private Slider staminaBar;
-        [SerializeField] private TextMeshProUGUI healthText;
-        [SerializeField] private TextMeshProUGUI staminaText;
+        [SerializeField] private Text healthText;
+        [SerializeField] private Text staminaText;
         
         [Header("Settings")]
         [SerializeField] private bool showNumbers = true;
@@ -154,12 +156,13 @@ namespace ALittleFolkTale.UI
                 textRect.offsetMin = Vector2.zero;
                 textRect.offsetMax = Vector2.zero;
                 
-                healthText = healthTextObj.AddComponent<TextMeshProUGUI>();
+                healthText = healthTextObj.AddComponent<Text>();
                 healthText.text = "100/100";
                 healthText.fontSize = 12;
                 healthText.color = Color.white;
-                healthText.alignment = TextAlignmentOptions.Center;
-                healthText.fontStyle = FontStyles.Bold;
+                healthText.alignment = TextAnchor.MiddleCenter;
+                healthText.fontStyle = FontStyle.Bold;
+                healthText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             }
         }
         
@@ -234,12 +237,13 @@ namespace ALittleFolkTale.UI
                 textRect.offsetMin = Vector2.zero;
                 textRect.offsetMax = Vector2.zero;
                 
-                staminaText = staminaTextObj.AddComponent<TextMeshProUGUI>();
+                staminaText = staminaTextObj.AddComponent<Text>();
                 staminaText.text = "100/100";
                 staminaText.fontSize = 12;
                 staminaText.color = Color.white;
-                staminaText.alignment = TextAlignmentOptions.Center;
-                staminaText.fontStyle = FontStyles.Bold;
+                staminaText.alignment = TextAnchor.MiddleCenter;
+                staminaText.fontStyle = FontStyle.Bold;
+                staminaText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             }
         }
         
