@@ -13,7 +13,7 @@ namespace ALittleFolkTale.Core
         [SerializeField] private float cameraDistance = 8f;
         [SerializeField] private float cameraAngle = 40f;
         [SerializeField] private float smoothSpeed = 8f;
-        [SerializeField] private float viewportOffset = -2f;
+        [SerializeField] private float viewportOffset = -4f;
         
         [Header("Camera Shake")]
         [SerializeField] private float shakeDuration = 0f;
