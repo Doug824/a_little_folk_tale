@@ -18,6 +18,7 @@ namespace ALittleFolkTale.Items
                 itemData.itemName = "Healing Berry";
                 itemData.description = "A sweet berry that restores health when consumed.";
                 itemData.itemType = ItemType.Consumable;
+                itemData.isStackable = true;
                 itemData.maxStackSize = 10;
                 itemData.isConsumable = true;
             }

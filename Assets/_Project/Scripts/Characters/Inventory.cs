@@ -27,6 +27,7 @@ namespace ALittleFolkTale.Characters
         public bool CanStack(Item newItem)
         {
             if (IsEmpty) return true;
+            if (!newItem.Data.isStackable) return false;
             if (item.Data.itemName != newItem.Data.itemName) return false;
             if (quantity >= item.Data.maxStackSize) return false;
             return true;
@@ -349,39 +350,43 @@ namespace ALittleFolkTale.Characters
         
         public bool UseQuickItemY()
         {
-            if (quickUseItemY == null) return false;
-            
-            // Find the item in inventory and use it
-            for (int i = 0; i < inventorySlots.Count; i++)
+            if (hotkeySlotQ >= 0 && hotkeySlotQ < inventorySlots.Count)
             {
-                if (inventorySlots[i].item == quickUseItemY)
+                if (UseConsumable(hotkeySlotQ))
                 {
-                    return UseConsumable(i);
+                    // Update the hotkey reference
+                    if (inventorySlots[hotkeySlotQ].IsEmpty)
+                    {
+                        ClearHotkeyQ();
+                    }
+                    else
+                    {
+                        quickUseItemY = inventorySlots[hotkeySlotQ].item;
+                    }
+                    return true;
                 }
             }
-            
-            // Item no longer in inventory
-            quickUseItemY = null;
-            OnQuickUseChanged?.Invoke();
             return false;
         }
         
         public bool UseQuickItemX()
         {
-            if (quickUseItemX == null) return false;
-            
-            // Find the item in inventory and use it
-            for (int i = 0; i < inventorySlots.Count; i++)
+            if (hotkeySlotE >= 0 && hotkeySlotE < inventorySlots.Count)
             {
-                if (inventorySlots[i].item == quickUseItemX)
+                if (UseConsumable(hotkeySlotE))
                 {
-                    return UseConsumable(i);
+                    // Update the hotkey reference
+                    if (inventorySlots[hotkeySlotE].IsEmpty)
+                    {
+                        ClearHotkeyE();
+                    }
+                    else
+                    {
+                        quickUseItemX = inventorySlots[hotkeySlotE].item;
+                    }
+                    return true;
                 }
             }
-            
-            // Item no longer in inventory
-            quickUseItemX = null;
-            OnQuickUseChanged?.Invoke();
             return false;
         }
         

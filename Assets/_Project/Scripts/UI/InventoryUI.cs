@@ -408,12 +408,12 @@ namespace ALittleFolkTale.UI
             // Y/Q button slot
             GameObject ySlot = CreateQuickUseSlot("Y/Q", new Vector2(-80, -40));
             quickUseYIcon = ySlot.transform.Find("Icon").GetComponent<Image>();
-            quickUseYText = ySlot.transform.Find("ButtonText").GetComponent<Text>();
+            quickUseYText = ySlot.transform.Find("QuantityText").GetComponent<Text>();
             
             // X/E button slot
             GameObject xSlot = CreateQuickUseSlot("X/E", new Vector2(-20, -40));
             quickUseXIcon = xSlot.transform.Find("Icon").GetComponent<Image>();
-            quickUseXText = xSlot.transform.Find("ButtonText").GetComponent<Text>();
+            quickUseXText = xSlot.transform.Find("QuantityText").GetComponent<Text>();
         }
         
         private InventorySlotUI CreateHotkeySlot(GameObject parent, string keyName, int slotIndex)
@@ -511,6 +511,24 @@ namespace ALittleFolkTale.UI
             buttonLabel.color = Color.yellow;
             buttonLabel.alignment = TextAnchor.MiddleCenter;
             buttonLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            
+            // Add quantity text in bottom-right corner
+            GameObject quantityObj = new GameObject("QuantityText");
+            quantityObj.transform.SetParent(slot.transform, false);
+            
+            RectTransform quantityRect = quantityObj.AddComponent<RectTransform>();
+            quantityRect.anchorMin = new Vector2(1, 0);
+            quantityRect.anchorMax = new Vector2(1, 0);
+            quantityRect.pivot = new Vector2(1, 0);
+            quantityRect.anchoredPosition = new Vector2(-3, 3);
+            quantityRect.sizeDelta = new Vector2(15, 12);
+            
+            Text quantityText = quantityObj.AddComponent<Text>();
+            quantityText.fontSize = 10;
+            quantityText.color = Color.white;
+            quantityText.alignment = TextAnchor.MiddleRight;
+            quantityText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            quantityText.raycastTarget = false;
             
             return slot;
         }
@@ -785,30 +803,52 @@ namespace ALittleFolkTale.UI
         {
             if (playerInventory == null) return;
             
-            // Update Y/Q slot
-            Item itemY = playerInventory.GetQuickUseItemY();
-            if (itemY != null && itemY.Data.icon != null)
+            // Update Y/Q slot - get from hotkey slot Q
+            var hotkeySlotQ = playerInventory.GetHotkeySlotQ();
+            if (!hotkeySlotQ.IsEmpty && hotkeySlotQ.item.Data.icon != null)
             {
-                quickUseYIcon.sprite = itemY.Data.icon;
+                quickUseYIcon.sprite = hotkeySlotQ.item.Data.icon;
                 quickUseYIcon.color = Color.white;
+                
+                // Show quantity if more than 1
+                if (hotkeySlotQ.quantity > 1)
+                {
+                    quickUseYText.text = hotkeySlotQ.quantity.ToString();
+                }
+                else
+                {
+                    quickUseYText.text = "";
+                }
             }
             else
             {
                 quickUseYIcon.sprite = null;
                 quickUseYIcon.color = Color.clear;
+                quickUseYText.text = "";
             }
             
-            // Update X/E slot
-            Item itemX = playerInventory.GetQuickUseItemX();
-            if (itemX != null && itemX.Data.icon != null)
+            // Update X/E slot - get from hotkey slot E
+            var hotkeySlotE = playerInventory.GetHotkeySlotE();
+            if (!hotkeySlotE.IsEmpty && hotkeySlotE.item.Data.icon != null)
             {
-                quickUseXIcon.sprite = itemX.Data.icon;
+                quickUseXIcon.sprite = hotkeySlotE.item.Data.icon;
                 quickUseXIcon.color = Color.white;
+                
+                // Show quantity if more than 1
+                if (hotkeySlotE.quantity > 1)
+                {
+                    quickUseXText.text = hotkeySlotE.quantity.ToString();
+                }
+                else
+                {
+                    quickUseXText.text = "";
+                }
             }
             else
             {
                 quickUseXIcon.sprite = null;
                 quickUseXIcon.color = Color.clear;
+                quickUseXText.text = "";
             }
         }
         
