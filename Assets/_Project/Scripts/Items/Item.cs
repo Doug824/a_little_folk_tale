@@ -182,6 +182,17 @@ namespace ALittleFolkTale.Items
             return newItem;
         }
 
+        protected virtual void OnTriggerEnter(Collider other)
+        {
+            if (!isOnGround || isPickedUp) return;
+            
+            PlayerController player = other.GetComponent<PlayerController>();
+            if (player != null)
+            {
+                Interact(player);
+            }
+        }
+        
         private void OnDrawGizmosSelected()
         {
             if (isOnGround)

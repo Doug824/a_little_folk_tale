@@ -348,20 +348,20 @@ namespace ALittleFolkTale.UI
             titleRect.sizeDelta = new Vector2(0, 40);
             
             Text titleText = previewTitle.AddComponent<Text>();
-            titleText.text = "LINK";
+            titleText.text = "MOSS";
             titleText.fontSize = 20;
             titleText.color = new Color(0.9f, 0.9f, 0.7f);
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.fontStyle = FontStyle.Bold;
             titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
-            // Character preview window (center of panel)
+            // Character preview window (larger, positioned right)
             GameObject previewWindow = new GameObject("CharacterPreview");
             previewWindow.transform.SetParent(characterPreviewPanel.transform, false);
             
             RectTransform windowRect = previewWindow.AddComponent<RectTransform>();
-            windowRect.anchorMin = new Vector2(0.2f, 0.3f);
-            windowRect.anchorMax = new Vector2(0.8f, 0.8f);
+            windowRect.anchorMin = new Vector2(0.4f, 0.15f);
+            windowRect.anchorMax = new Vector2(0.9f, 0.85f);
             windowRect.offsetMin = Vector2.zero;
             windowRect.offsetMax = Vector2.zero;
             
@@ -394,9 +394,21 @@ namespace ALittleFolkTale.UI
 
         private void CreateQuickUsePanel()
         {
+            // Create separate canvas for quick-use panel (always on top)
+            GameObject quickUseCanvasObj = new GameObject("QuickUseCanvas");
+            Canvas quickUseCanvas = quickUseCanvasObj.AddComponent<Canvas>();
+            quickUseCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            quickUseCanvas.sortingOrder = 30; // Higher than main inventory canvas
+            
+            CanvasScaler quickScaler = quickUseCanvasObj.AddComponent<CanvasScaler>();
+            quickScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            quickScaler.referenceResolution = new Vector2(1920, 1080);
+            
+            quickUseCanvasObj.AddComponent<GraphicRaycaster>();
+            
             // Quick-use panel in top-right corner of screen (always visible)
             quickUsePanel = new GameObject("QuickUsePanel");
-            quickUsePanel.transform.SetParent(inventoryCanvas.transform, false);
+            quickUsePanel.transform.SetParent(quickUseCanvas.transform, false);
             
             RectTransform quickRect = quickUsePanel.AddComponent<RectTransform>();
             quickRect.anchorMin = new Vector2(1f, 1f);
@@ -598,15 +610,21 @@ namespace ALittleFolkTale.UI
             quantityRect.anchorMin = new Vector2(1, 0);
             quantityRect.anchorMax = new Vector2(1, 0);
             quantityRect.pivot = new Vector2(1, 0);
-            quantityRect.anchoredPosition = new Vector2(-5, 5);
-            quantityRect.sizeDelta = new Vector2(20, 15);
+            quantityRect.anchoredPosition = new Vector2(-3, 3);
+            quantityRect.sizeDelta = new Vector2(25, 20);
             
             Text quantityText = quantityObj.AddComponent<Text>();
-            quantityText.fontSize = 10;
-            quantityText.color = Color.white;
-            quantityText.alignment = TextAnchor.MiddleRight;
+            quantityText.fontSize = 14;
+            quantityText.color = Color.yellow;
+            quantityText.alignment = TextAnchor.MiddleCenter;
             quantityText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            quantityText.fontStyle = FontStyle.Bold;
             quantityText.raycastTarget = false; // Don't block drag events
+            
+            // Add outline for better visibility
+            Outline outline = quantityObj.AddComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(1, 1);
             
             // Add hotbar number for hotbar slots
             if (isHotbar)
@@ -639,15 +657,15 @@ namespace ALittleFolkTale.UI
 
         private void CreateEquipmentSlots()
         {
-            // Equipment slots positioned around character preview (Link's Awakening style)
-            // Weapon slot (left side of character)
-            weaponSlot = CreateEquipmentSlot("Sword", new Vector2(-80, 0), EquipmentSlot.MainHand);
+            // Equipment slots positioned to the left of character preview
+            // Weapon slot (top left)
+            weaponSlot = CreateEquipmentSlot("Sword", new Vector2(-120, 40), EquipmentSlot.MainHand);
             
-            // Shield slot (right side of character) 
-            armorSlot = CreateEquipmentSlot("Shield", new Vector2(80, 0), EquipmentSlot.Armor);
+            // Shield slot (middle left) 
+            armorSlot = CreateEquipmentSlot("Shield", new Vector2(-120, 0), EquipmentSlot.Armor);
             
-            // Accessory slot (below character)
-            accessorySlot = CreateEquipmentSlot("Item", new Vector2(0, -80), EquipmentSlot.Accessory);
+            // Accessory slot (bottom left)
+            accessorySlot = CreateEquipmentSlot("Item", new Vector2(-120, -40), EquipmentSlot.Accessory);
         }
 
         private EquipmentSlotUI CreateEquipmentSlot(string slotName, Vector2 position, EquipmentSlot slotType)
@@ -738,12 +756,19 @@ namespace ALittleFolkTale.UI
             inventoryPanel.SetActive(true);
             characterPreviewPanel.SetActive(true);
             
+            // Ensure quick-use panel stays visible
+            if (quickUsePanel != null)
+            {
+                quickUsePanel.SetActive(true);
+            }
+            
             // Pause game
             Time.timeScale = 0f;
             
             RefreshInventoryDisplay();
             RefreshEquipmentDisplay();
             RefreshQuickUseDisplay();
+            RefreshHotkeyDisplay();
         }
 
         public void CloseInventory()
