@@ -36,6 +36,12 @@ namespace ALittleFolkTale.UI
             slotButton = button;
             isHotbarSlot = isHotbar;
             
+            // Disable the button to prevent interference with drag events
+            if (slotButton != null)
+            {
+                slotButton.enabled = false;
+            }
+            
             // Get or add background image component
             slotBackground = GetComponent<Image>();
             if (slotBackground == null)
@@ -43,9 +49,12 @@ namespace ALittleFolkTale.UI
                 slotBackground = gameObject.AddComponent<Image>();
             }
             slotBackground.color = normalColor;
+            slotBackground.raycastTarget = true; // Ensure it receives events
             
             // Find the drag canvas (should be the main inventory canvas)
             dragCanvas = GetComponentInParent<Canvas>();
+            
+            Debug.Log($"Initialized slot {index} with drag canvas: {dragCanvas?.name}");
         }
 
         public void UpdateDisplay(InventorySlot slot)
@@ -84,6 +93,8 @@ namespace ALittleFolkTale.UI
                 {
                     quantityText.text = "";
                 }
+                
+                Debug.Log($"Slot {slotIndex} now contains: {slot.item.Data.itemName} x{slot.quantity}");
             }
         }
 
@@ -106,15 +117,19 @@ namespace ALittleFolkTale.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            Debug.Log($"OnPointerClick called on slot {slotIndex} with button {eventData.button}");
+            
             if (eventData.button == PointerEventData.InputButton.Left)
             {
                 // Toggle selection
                 if (isSelected)
                 {
+                    Debug.Log($"Deselecting slot {slotIndex}");
                     Deselect();
                 }
                 else
                 {
+                    Debug.Log($"Selecting slot {slotIndex}");
                     Select();
                 }
             }
@@ -123,6 +138,7 @@ namespace ALittleFolkTale.UI
                 // Right click for quick actions
                 if (currentSlot != null && !currentSlot.IsEmpty)
                 {
+                    Debug.Log($"Right clicking on slot {slotIndex} with item {currentSlot.item.Data.itemName}");
                     InventoryUI.Instance?.OnInventorySlotRightClicked(slotIndex);
                 }
             }
@@ -205,8 +221,15 @@ namespace ALittleFolkTale.UI
         
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (currentSlot == null || currentSlot.IsEmpty) return;
+            Debug.Log($"OnBeginDrag called on slot {slotIndex}");
             
+            if (currentSlot == null || currentSlot.IsEmpty)
+            {
+                Debug.Log($"Slot {slotIndex} is empty, cannot drag");
+                return;
+            }
+            
+            Debug.Log($"Starting drag of {currentSlot.item.Data.itemName} from slot {slotIndex}");
             draggedSlot = this;
             
             // Create drag icon
@@ -251,7 +274,21 @@ namespace ALittleFolkTale.UI
         
         public void OnDrop(PointerEventData eventData)
         {
-            if (draggedSlot == null || draggedSlot == this) return;
+            Debug.Log($"OnDrop called on slot {slotIndex}");
+            
+            if (draggedSlot == null)
+            {
+                Debug.Log("No dragged slot found");
+                return;
+            }
+            
+            if (draggedSlot == this)
+            {
+                Debug.Log("Dropped on same slot, ignoring");
+                return;
+            }
+            
+            Debug.Log($"Dropping from slot {draggedSlot.slotIndex} to slot {slotIndex}");
             
             // Perform item swap
             InventoryUI.Instance?.SwapItems(draggedSlot.slotIndex, slotIndex);
@@ -300,7 +337,17 @@ namespace ALittleFolkTale.UI
                 );
                 
                 dragIcon.transform.localPosition = localPoint;
+                //Debug.Log($"Drag icon position: {localPoint}");
             }
+        }
+        
+        // Add a simple test method
+        private void OnEnable()
+        {
+            Debug.Log($"InventorySlotUI {slotIndex} enabled with interfaces: " +
+                     $"IPointerClickHandler={this is IPointerClickHandler}, " +
+                     $"IBeginDragHandler={this is IBeginDragHandler}, " +
+                     $"IDropHandler={this is IDropHandler}");
         }
 
     }

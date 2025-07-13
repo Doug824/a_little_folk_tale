@@ -72,6 +72,9 @@ namespace ALittleFolkTale.UI
                 CreateInventoryUI();
             }
             
+            // Ensure EventSystem exists for UI events
+            EnsureEventSystem();
+            
             FindPlayerInventory();
             SetupInventorySlots();
             CloseInventory(); // Start closed
@@ -80,6 +83,21 @@ namespace ALittleFolkTale.UI
             if (quickUsePanel != null)
             {
                 quickUsePanel.SetActive(true);
+            }
+        }
+        
+        private void EnsureEventSystem()
+        {
+            if (EventSystem.current == null)
+            {
+                GameObject eventSystemObj = new GameObject("EventSystem");
+                eventSystemObj.AddComponent<EventSystem>();
+                eventSystemObj.AddComponent<StandaloneInputModule>();
+                Debug.Log("Created EventSystem for UI events");
+            }
+            else
+            {
+                Debug.Log($"EventSystem found: {EventSystem.current.name}");
             }
         }
 
@@ -358,6 +376,7 @@ namespace ALittleFolkTale.UI
             
             Image iconImage = iconObj.AddComponent<Image>();
             iconImage.color = Color.clear;
+            iconImage.raycastTarget = false; // Don't block drag events
             
             // Create quantity text
             GameObject quantityObj = new GameObject("QuantityText");
@@ -375,6 +394,7 @@ namespace ALittleFolkTale.UI
             quantityText.color = Color.white;
             quantityText.alignment = TextAnchor.MiddleRight;
             quantityText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            quantityText.raycastTarget = false; // Don't block drag events
             
             // Add hotbar number for hotbar slots
             if (isHotbar)
@@ -396,6 +416,7 @@ namespace ALittleFolkTale.UI
                 numberText.alignment = TextAnchor.MiddleCenter;
                 numberText.fontStyle = FontStyle.Bold;
                 numberText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                numberText.raycastTarget = false; // Don't block drag events
             }
             
             InventorySlotUI slotUI = slotObj.AddComponent<InventorySlotUI>();
