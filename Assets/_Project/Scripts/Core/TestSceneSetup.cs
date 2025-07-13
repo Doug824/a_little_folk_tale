@@ -29,6 +29,7 @@ namespace ALittleFolkTale.Core
             CreateTestEnemies();
             CreateWalls();
             SetupCamera();
+            SetupUI();
         }
 
         private void CreateGround()
@@ -185,6 +186,23 @@ namespace ALittleFolkTale.Core
                     mainCamera.gameObject.AddComponent<ALittleFolkTale.Core.CameraController>();
                 }
             }
+        }
+        
+        private void SetupUI()
+        {
+            // Create GameHUD
+            GameObject hudManager = new GameObject("GameHUD");
+            hudManager.AddComponent<ALittleFolkTale.UI.GameHUD>();
+            
+            // Create DebugUI
+            GameObject debugManager = new GameObject("DebugUI");
+            debugManager.AddComponent<ALittleFolkTale.UI.DebugUI>();
+            
+            // Create DamageNumbers system
+            GameObject damageManager = new GameObject("DamageNumbers");
+            damageManager.AddComponent<ALittleFolkTale.UI.DamageNumbers>();
+            
+            Debug.Log("UI systems created successfully!");
         }
 
         // Helper method to quickly test in editor

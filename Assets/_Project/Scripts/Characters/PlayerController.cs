@@ -435,11 +435,20 @@ namespace ALittleFolkTale.Characters
                     if (enemy != null)
                     {
                         enemy.TakeDamage(attackDamage);
-                        // Debug.Log($"Hit {col.name} for {attackDamage} damage!");
+                        
+                        // Show damage numbers
+                        if (UI.DamageNumbers.Instance != null)
+                        {
+                            UI.DamageNumbers.Instance.ShowDamage(col.transform.position + Vector3.up, attackDamage, UI.DamageNumbers.DamageType.Enemy);
+                        }
                     }
                     else
                     {
-                        Debug.Log($"Hit enemy: {col.name} for {attackDamage} damage");
+                        // Show damage numbers for objects without Enemy component
+                        if (UI.DamageNumbers.Instance != null)
+                        {
+                            UI.DamageNumbers.Instance.ShowDamage(col.transform.position + Vector3.up, attackDamage, UI.DamageNumbers.DamageType.Enemy);
+                        }
                     }
                     
                     // Add knockback
@@ -647,6 +656,12 @@ namespace ALittleFolkTale.Characters
             // Play damage sound and effect
             PlaySoundPlaceholder("Player Hit", 0.6f);
             CreateDamageEffect();
+            
+            // Show damage numbers
+            if (UI.DamageNumbers.Instance != null)
+            {
+                UI.DamageNumbers.Instance.ShowDamage(transform.position + Vector3.up, damage, UI.DamageNumbers.DamageType.Player);
+            }
             
             // Camera shake on damage (very subtle)
             if (Core.CameraController.Instance != null)
