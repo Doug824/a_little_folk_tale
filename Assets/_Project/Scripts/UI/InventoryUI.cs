@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using ALittleFolkTale.Characters;
 using ALittleFolkTale.Items;
@@ -45,6 +46,7 @@ namespace ALittleFolkTale.UI
         
         private Inventory playerInventory;
         private bool isInventoryOpen = false;
+        private int selectedSlotIndex = -1;
         
         // Singleton access
         private static InventoryUI instance;
@@ -89,16 +91,22 @@ namespace ALittleFolkTale.UI
                 ToggleInventory();
             }
             
-            // Quick-use item keys
-            if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Y))
+            // Quick-use item keys (only when inventory is closed)
+            if (!isInventoryOpen)
             {
-                UseQuickItemY();
+                if (Input.GetKeyDown(KeyCode.Q) || Input.GetKeyDown(KeyCode.Y))
+                {
+                    UseQuickItemY();
+                }
+                
+                if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.X))
+                {
+                    UseQuickItemX();
+                }
             }
             
-            if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.X))
-            {
-                UseQuickItemX();
-            }
+            // Handle keyboard navigation when inventory is open
+            HandleKeyboardNavigation();
         }
 
         private void CreateInventoryUI()
@@ -334,6 +342,7 @@ namespace ALittleFolkTale.UI
             
             Image slotImage = slotObj.AddComponent<Image>();
             slotImage.color = new Color(0.3f, 0.3f, 0.3f, 0.8f);
+            slotImage.raycastTarget = true; // Ensure it can receive drag events
             
             Button slotButton = slotObj.AddComponent<Button>();
             
@@ -580,23 +589,16 @@ namespace ALittleFolkTale.UI
             }
         }
         
+        public void OnSlotSelected(int slotIndex)
+        {
+            selectedSlotIndex = slotIndex;
+            Debug.Log($"Selected slot {slotIndex}");
+        }
+        
         public void OnInventorySlotClicked(int slotIndex)
         {
-            if (playerInventory == null) return;
-            
-            Item item = playerInventory.GetItem(slotIndex);
-            if (item == null) return;
-            
-            // If it's equipment, equip it
-            if (item.Data.itemType == ItemType.Weapon || item.Data.itemType == ItemType.Equipment)
-            {
-                playerInventory.EquipItem(slotIndex);
-            }
-            // If it's consumable, assign to quick-use (Y slot by default)
-            else if (item.Data.isConsumable)
-            {
-                playerInventory.SetQuickUseItemY(item);
-            }
+            // This is now handled by the slot's selection system
+            // Keep for backward compatibility
         }
         
         public void OnInventorySlotRightClicked(int slotIndex)
@@ -606,10 +608,104 @@ namespace ALittleFolkTale.UI
             Item item = playerInventory.GetItem(slotIndex);
             if (item == null) return;
             
-            // Right-click assigns consumables to X slot
-            if (item.Data.isConsumable)
+            // Right-click context menu options
+            if (item.Data.itemType == ItemType.Weapon || item.Data.itemType == ItemType.Equipment)
+            {
+                // Equip the item
+                playerInventory.EquipItem(slotIndex);
+            }
+            else if (item.Data.isConsumable)
+            {
+                // Show quick-use assignment options
+                ShowQuickUseMenu(slotIndex);
+            }
+        }
+        
+        private void ShowQuickUseMenu(int slotIndex)
+        {
+            Item item = playerInventory.GetItem(slotIndex);
+            if (item == null) return;
+            
+            // For now, cycle between Y and X slots
+            if (playerInventory.GetQuickUseItemY() == item)
             {
                 playerInventory.SetQuickUseItemX(item);
+                Debug.Log($"Assigned {item.Data.itemName} to X/E slot");
+            }
+            else
+            {
+                playerInventory.SetQuickUseItemY(item);
+                Debug.Log($"Assigned {item.Data.itemName} to Y/Q slot");
+            }
+        }
+        
+        public void SwapItems(int fromSlot, int toSlot)
+        {
+            if (playerInventory == null) return;
+            
+            if (playerInventory.MoveItem(fromSlot, toSlot))
+            {
+                Debug.Log($"Moved/swapped items between slot {fromSlot} and slot {toSlot}");
+            }
+        }
+        
+        // Keyboard navigation support
+        private void HandleKeyboardNavigation()
+        {
+            if (!isInventoryOpen) return;
+            
+            // Arrow key navigation
+            int currentIndex = selectedSlotIndex;
+            if (currentIndex == -1) currentIndex = 0;
+            
+            if (Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                int newIndex = currentIndex - inventoryColumns;
+                if (newIndex >= 0)
+                {
+                    inventorySlots[newIndex].GetComponent<InventorySlotUI>()?.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                int newIndex = currentIndex + inventoryColumns;
+                if (newIndex < inventorySlots.Count)
+                {
+                    inventorySlots[newIndex].GetComponent<InventorySlotUI>()?.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                int newIndex = currentIndex - 1;
+                if (newIndex >= 0 && currentIndex % inventoryColumns != 0)
+                {
+                    inventorySlots[newIndex].GetComponent<InventorySlotUI>()?.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                int newIndex = currentIndex + 1;
+                if (newIndex < inventorySlots.Count && currentIndex % inventoryColumns != inventoryColumns - 1)
+                {
+                    inventorySlots[newIndex].GetComponent<InventorySlotUI>()?.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+                }
+            }
+            
+            // Enter/Space to use/equip selected item
+            if ((Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space)) && selectedSlotIndex >= 0)
+            {
+                Item item = playerInventory.GetItem(selectedSlotIndex);
+                if (item != null)
+                {
+                    if (item.Data.itemType == ItemType.Weapon || item.Data.itemType == ItemType.Equipment)
+                    {
+                        playerInventory.EquipItem(selectedSlotIndex);
+                    }
+                    else if (item.Data.isConsumable)
+                    {
+                        playerInventory.UseConsumable(selectedSlotIndex);
+                    }
+                }
             }
         }
     }

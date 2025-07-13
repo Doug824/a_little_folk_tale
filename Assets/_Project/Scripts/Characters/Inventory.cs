@@ -381,6 +381,62 @@ namespace ALittleFolkTale.Characters
             return false;
         }
         
+        // Item manipulation methods
+        public bool SwapItems(int fromSlot, int toSlot)
+        {
+            if (fromSlot < 0 || fromSlot >= inventorySlots.Count ||
+                toSlot < 0 || toSlot >= inventorySlots.Count)
+                return false;
+            
+            // Swap the items
+            var temp = inventorySlots[fromSlot];
+            inventorySlots[fromSlot] = inventorySlots[toSlot];
+            inventorySlots[toSlot] = temp;
+            
+            OnInventoryChanged?.Invoke();
+            return true;
+        }
+        
+        public bool MoveItem(int fromSlot, int toSlot)
+        {
+            if (fromSlot < 0 || fromSlot >= inventorySlots.Count ||
+                toSlot < 0 || toSlot >= inventorySlots.Count)
+                return false;
+            
+            if (inventorySlots[fromSlot].IsEmpty)
+                return false;
+            
+            // If destination is empty, just move
+            if (inventorySlots[toSlot].IsEmpty)
+            {
+                inventorySlots[toSlot] = inventorySlots[fromSlot];
+                inventorySlots[fromSlot] = new InventorySlot();
+                OnInventoryChanged?.Invoke();
+                return true;
+            }
+            
+            // If items can stack, try to stack them
+            if (inventorySlots[toSlot].CanStack(inventorySlots[fromSlot].item))
+            {
+                int spaceLeft = inventorySlots[toSlot].item.Data.maxStackSize - inventorySlots[toSlot].quantity;
+                int amountToMove = Mathf.Min(spaceLeft, inventorySlots[fromSlot].quantity);
+                
+                inventorySlots[toSlot].quantity += amountToMove;
+                inventorySlots[fromSlot].quantity -= amountToMove;
+                
+                if (inventorySlots[fromSlot].quantity <= 0)
+                {
+                    inventorySlots[fromSlot].Clear();
+                }
+                
+                OnInventoryChanged?.Invoke();
+                return true;
+            }
+            
+            // Otherwise, swap the items
+            return SwapItems(fromSlot, toSlot);
+        }
+        
         // Getters for UI
         public List<InventorySlot> GetInventorySlots() => inventorySlots;
         public EquipmentSlots GetEquipment() => equipment;
