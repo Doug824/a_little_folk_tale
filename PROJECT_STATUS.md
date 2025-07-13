@@ -109,31 +109,49 @@ You can now open Unity, create a new URP project, and copy these files in to get
 
 ## 📋 Next Development Steps
 
-### ✅ COMPLETED: Prototype Framework
+### ✅ COMPLETED: Core Combat & Camera Systems
+**Prototype Framework:**
 - Unity project structure with all core scripts
 - TestScene.unity with auto-setup system
-- Player movement, combat, and camera systems
-- Debug UI for real-time testing
 - Ready for immediate Unity testing
 
+**Combat System (COMPLETE):**
+- Responsive player movement with WASD controls
+- Attack system with timing, range visualization, and effects
+- Rolling/dodge mechanics with stamina management
+- Enemy AI with health, damage, and knockback
+- Visual feedback: hit effects, damage effects, attack cones
+- Sound placeholder system for all actions
+
+**Camera System (COMPLETE):**
+- Diablo-style fixed-angle camera (40° angle)
+- Smooth player following with configurable speed
+- Player properly centered in viewport
+- Camera shake effects for impact feedback
+- Boundary support for level limits
+- Singleton pattern for easy access
+
+**Input System (COMPLETE):**
+- Direct keyboard input (WASD, Space, Left Mouse, E)
+- Input System fallback for controller support
+- Reliable input handling without spam or issues
+
 ### Current Priority Tasks:
-1. **Unity Integration & Testing**
-   - Load project in Unity 2022.3 LTS
-   - Test TestScene.unity prototype
-   - Verify controller input responsiveness
-   - Fine-tune movement speed and camera feel
+1. **UI System Development**
+   - Health and stamina bars
+   - Damage numbers
+   - Basic HUD elements
+   - Menu systems
 
-2. **Core Mechanics Refinement**
-   - Adjust combat timing and feedback
-   - Polish rolling/dodge mechanics
-   - Add hit effects and sound placeholders
-   - Test stamina system balance
+2. **Save/Load System**
+   - Implement existing save system framework
+   - Player progress persistence
+   - Scene transitions
 
-3. **Asset Creation Pipeline**
-   - Set up Blender export settings
-   - Create player character proxy
-   - Design tutorial path layout
-   - Build Thistle Hollow greybox
+3. **Inventory System**
+   - Item pickup and management
+   - Equipment system
+   - UI integration
 
 ### Future Milestones:
 - Replace placeholder assets with custom models
