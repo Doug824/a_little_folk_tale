@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using ALittleFolkTale.Items;
 
 namespace ALittleFolkTale.Characters
 {
@@ -12,15 +13,21 @@ namespace ALittleFolkTale.Characters
         [SerializeField] private float rollSpeed = 12f;
         [SerializeField] private float rollDuration = 0.4f;
         [SerializeField] private float rollStaminaCost = 15f;
-        [SerializeField] private float rollCooldown = 0.3f;
+        [SerializeField] private float rollCooldown = 0.8f;
+        [SerializeField] private float invincibilityDuration = 0.3f;
 
         [Header("Combat Settings")]
-        [SerializeField] private float attackRange = 1.5f;
-        [SerializeField] private int attackDamage = 10;
-        [SerializeField] private float attackCooldown = 0.3f;
+        [SerializeField] private float baseAttackRange = 1.5f;
+        [SerializeField] private int baseAttackDamage = 10;
+        [SerializeField] private float baseAttackCooldown = 0.3f;
         [SerializeField] private float attackDuration = 0.3f;
         [SerializeField] private float attackStaminaCost = 8f;
         [SerializeField] private float attackMovementReduction = 0.3f;
+        
+        // Current effective combat stats (modified by weapons)
+        private float currentAttackRange;
+        private int currentAttackDamage;
+        private float currentAttackCooldown;
         
         [Header("Debug Visualization")]
         [SerializeField] private bool showAttackRangeDebug = false;
@@ -43,11 +50,13 @@ namespace ALittleFolkTale.Characters
         private Vector3 rollDirection;
         private bool isRolling = false;
         private bool isAttacking = false;
+        private bool isInvincible = false;
         private float rollTimer = 0f;
         private float rollCooldownTimer = 0f;
         private float attackTimer = 0f;
         private float attackDurationTimer = 0f;
         private float staminaRegenTimer = 0f;
+        private float invincibilityTimer = 0f;
         
         private GameObject persistentDirectionArrow;
 
@@ -80,6 +89,9 @@ namespace ALittleFolkTale.Characters
         {
             currentHealth = maxHealth;
             currentStamina = maxStamina;
+            
+            // Initialize combat stats to base values
+            ResetWeaponStats();
             
             // Setup input actions after everything is initialized
             SetupInputActions();
@@ -203,7 +215,7 @@ namespace ALittleFolkTale.Characters
             {
                 PerformAttack();
                 currentStamina -= attackStaminaCost;
-                attackTimer = attackCooldown;
+                attackTimer = currentAttackCooldown;
                 isAttacking = true;
                 attackDurationTimer = attackDuration;
                 staminaRegenTimer = staminaRegenDelay;
@@ -220,7 +232,10 @@ namespace ALittleFolkTale.Characters
             if (!isRolling && rollCooldownTimer <= 0f && currentStamina >= rollStaminaCost && movementDirection.magnitude > 0.1f)
             {
                 isRolling = true;
+                isInvincible = true;
                 rollTimer = rollDuration;
+                rollCooldownTimer = rollCooldown;
+                invincibilityTimer = invincibilityDuration;
                 rollDirection = movementDirection.normalized;
                 currentStamina -= rollStaminaCost;
                 staminaRegenTimer = staminaRegenDelay;
@@ -301,7 +316,6 @@ namespace ALittleFolkTale.Characters
                 if (rollTimer <= 0f)
                 {
                     isRolling = false;
-                    rollCooldownTimer = rollCooldown;
                     if (animator != null)
                     {
                         animator.SetBool("IsRolling", false);
@@ -319,6 +333,16 @@ namespace ALittleFolkTale.Characters
                     {
                         animator.SetBool("IsAttacking", false);
                     }
+                }
+            }
+
+            // Handle invincibility frames
+            if (isInvincible)
+            {
+                invincibilityTimer -= Time.deltaTime;
+                if (invincibilityTimer <= 0f)
+                {
+                    isInvincible = false;
                 }
             }
 
@@ -352,7 +376,7 @@ namespace ALittleFolkTale.Characters
             {
                 PerformAttack();
                 currentStamina -= attackStaminaCost;
-                attackTimer = attackCooldown;
+                attackTimer = currentAttackCooldown;
                 isAttacking = true;
                 attackDurationTimer = attackDuration;
                 staminaRegenTimer = staminaRegenDelay;
@@ -409,12 +433,12 @@ namespace ALittleFolkTale.Characters
             PlaySoundPlaceholder("Attack Swing", 0.3f);
 
             // Create attack area in front of player
-            Vector3 attackPosition = transform.position + transform.forward * attackRange * 0.5f;
+            Vector3 attackPosition = transform.position + transform.forward * currentAttackRange * 0.5f;
             
             // Show attack range visualization
             CreateAttackRangeEffect(attackPosition);
             
-            Collider[] hitColliders = Physics.OverlapSphere(attackPosition, attackRange);
+            Collider[] hitColliders = Physics.OverlapSphere(attackPosition, currentAttackRange);
             
             bool hitSomething = false;
             foreach (Collider col in hitColliders)
@@ -434,12 +458,12 @@ namespace ALittleFolkTale.Characters
                     // Apply damage
                     if (enemy != null)
                     {
-                        enemy.TakeDamage(attackDamage);
+                        enemy.TakeDamage(currentAttackDamage);
                         
                         // Show damage numbers
                         if (UI.DamageNumbers.Instance != null)
                         {
-                            UI.DamageNumbers.Instance.ShowDamage(col.transform.position + Vector3.up, attackDamage, UI.DamageNumbers.DamageType.Enemy);
+                            UI.DamageNumbers.Instance.ShowDamage(col.transform.position + Vector3.up, currentAttackDamage, UI.DamageNumbers.DamageType.Enemy);
                         }
                     }
                     else
@@ -447,7 +471,7 @@ namespace ALittleFolkTale.Characters
                         // Show damage numbers for objects without Enemy component
                         if (UI.DamageNumbers.Instance != null)
                         {
-                            UI.DamageNumbers.Instance.ShowDamage(col.transform.position + Vector3.up, attackDamage, UI.DamageNumbers.DamageType.Enemy);
+                            UI.DamageNumbers.Instance.ShowDamage(col.transform.position + Vector3.up, currentAttackDamage, UI.DamageNumbers.DamageType.Enemy);
                         }
                     }
                     
@@ -492,9 +516,9 @@ namespace ALittleFolkTale.Characters
             cone.name = "AttackCone";
             
             // Position and scale the cone
-            cone.transform.localPosition = Vector3.forward * attackRange * 0.5f;
+            cone.transform.localPosition = Vector3.forward * currentAttackRange * 0.5f;
             cone.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Rotate to point forward
-            cone.transform.localScale = new Vector3(attackRange * 1.5f, attackRange * 0.7f, attackRange * 1.5f);
+            cone.transform.localScale = new Vector3(currentAttackRange * 1.5f, currentAttackRange * 0.7f, currentAttackRange * 1.5f);
             
             Renderer renderer = cone.GetComponent<Renderer>();
             renderer.material.color = new Color(1f, 0.3f, 0f, 0.2f); // Orange, more transparent
@@ -649,7 +673,7 @@ namespace ALittleFolkTale.Characters
 
         public void TakeDamage(int damage)
         {
-            if (isRolling) return;
+            if (isInvincible) return;
 
             currentHealth -= damage;
             
@@ -722,6 +746,25 @@ namespace ALittleFolkTale.Characters
         {
             Debug.Log("Player died!");
         }
+        
+        public void Heal(int healAmount)
+        {
+            int oldHealth = currentHealth;
+            currentHealth = Mathf.Min(maxHealth, currentHealth + healAmount);
+            int actualHealing = currentHealth - oldHealth;
+            
+            if (actualHealing > 0)
+            {
+                // Show healing numbers
+                if (UI.DamageNumbers.Instance != null)
+                {
+                    UI.DamageNumbers.Instance.ShowHealing(transform.position + Vector3.up, actualHealing);
+                }
+                
+                // Play healing sound
+                PlaySoundPlaceholder("Player Heal", 0.5f);
+            }
+        }
 
         public float GetHealthPercentage()
         {
@@ -733,6 +776,43 @@ namespace ALittleFolkTale.Characters
             return currentStamina / maxStamina;
         }
 
+        // Weapon system methods
+        public void ApplyWeaponStats(ItemStats weaponStats)
+        {
+            currentAttackDamage = baseAttackDamage + weaponStats.damage;
+            currentAttackRange = baseAttackRange; // Use base range for now
+            currentAttackCooldown = baseAttackCooldown / Mathf.Max(0.1f, weaponStats.attackSpeed);
+            
+            Debug.Log($"Applied weapon stats - Damage: {currentAttackDamage}, Range: {currentAttackRange}, Speed: {weaponStats.attackSpeed}");
+        }
+
+        public void ResetWeaponStats()
+        {
+            currentAttackDamage = baseAttackDamage;
+            currentAttackRange = baseAttackRange;
+            currentAttackCooldown = baseAttackCooldown;
+            
+            Debug.Log("Reset to base weapon stats");
+        }
+        
+        private void TryUseQuickItemY()
+        {
+            var inventory = GetComponent<Inventory>();
+            if (inventory != null)
+            {
+                inventory.UseQuickItemY();
+            }
+        }
+        
+        private void TryUseQuickItemX()
+        {
+            var inventory = GetComponent<Inventory>();
+            if (inventory != null)
+            {
+                inventory.UseQuickItemX();
+            }
+        }
+
         private void OnDrawGizmosSelected()
         {
             if (showAttackRangeDebug)
@@ -741,8 +821,8 @@ namespace ALittleFolkTale.Characters
                 Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f);
                 
                 // Draw cone outline
-                Vector3 coneCenter = transform.position + transform.forward * attackRange * 0.5f;
-                float coneRadius = attackRange * 0.75f;
+                Vector3 coneCenter = transform.position + transform.forward * currentAttackRange * 0.5f;
+                float coneRadius = currentAttackRange * 0.75f;
                 
                 // Draw the cone base circle
                 DrawWireCircle(coneCenter, coneRadius, transform.up);

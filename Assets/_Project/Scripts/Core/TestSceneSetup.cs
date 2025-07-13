@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using ALittleFolkTale.Characters;
+using ALittleFolkTale.Items;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -28,6 +29,8 @@ namespace ALittleFolkTale.Core
             CreatePlayer();
             CreateTestEnemies();
             CreateWalls();
+            CreateHealingBerries();
+            CreateTestWeapons();
             SetupCamera();
             SetupUI();
         }
@@ -116,6 +119,9 @@ namespace ALittleFolkTale.Core
             
             // Add PlayerController AFTER PlayerInput is fully configured
             PlayerController playerController = player.AddComponent<PlayerController>();
+            
+            // Add Inventory component
+            player.AddComponent<ALittleFolkTale.Characters.Inventory>();
 
             Debug.Log("Player created successfully!");
         }
@@ -188,6 +194,39 @@ namespace ALittleFolkTale.Core
             }
         }
         
+        private void CreateHealingBerries()
+        {
+            // Create several healing berries scattered around the arena
+            for (int i = 0; i < 5; i++)
+            {
+                Vector3 position = new Vector3(
+                    Random.Range(-8f, 8f),
+                    0.5f, // On ground
+                    Random.Range(-8f, 8f)
+                );
+                
+                // Use the static creation method from Berry class
+                GameObject berry = Berry.CreateBerry(position, 25);
+                Debug.Log($"Created healing berry at {position}");
+            }
+        }
+
+        private void CreateTestWeapons()
+        {
+            // Create a few sticks scattered around the arena
+            for (int i = 0; i < 3; i++)
+            {
+                Vector3 position = new Vector3(
+                    Random.Range(-6f, 6f),
+                    0.5f, // On ground
+                    Random.Range(-6f, 6f)
+                );
+                
+                GameObject stick = Stick.CreateStick(position);
+                Debug.Log($"Created wooden stick at {position}");
+            }
+        }
+
         private void SetupUI()
         {
             // Create GameHUD
@@ -201,6 +240,10 @@ namespace ALittleFolkTale.Core
             // Create DamageNumbers system
             GameObject damageManager = new GameObject("DamageNumbers");
             damageManager.AddComponent<ALittleFolkTale.UI.DamageNumbers>();
+            
+            // Create InventoryUI
+            GameObject inventoryManager = new GameObject("InventoryUI");
+            inventoryManager.AddComponent<ALittleFolkTale.UI.InventoryUI>();
             
             Debug.Log("UI systems created successfully!");
         }
