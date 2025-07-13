@@ -68,6 +68,10 @@ namespace ALittleFolkTale.Characters
         private Item quickUseItemY; // Y button / Q key
         private Item quickUseItemX; // X button / E key
         
+        // Hotkey slots for UI (these reference items in the main inventory)
+        private int hotkeySlotQ = -1; // Index in main inventory, -1 if empty
+        private int hotkeySlotE = -1; // Index in main inventory, -1 if empty
+        
         // Events for UI updates
         public System.Action OnInventoryChanged;
         public System.Action OnEquipmentChanged;
@@ -437,6 +441,55 @@ namespace ALittleFolkTale.Characters
             return SwapItems(fromSlot, toSlot);
         }
         
+        // Hotkey slot management
+        public void SetHotkeyQ(int inventorySlotIndex)
+        {
+            if (inventorySlotIndex >= 0 && inventorySlotIndex < inventorySlots.Count)
+            {
+                hotkeySlotQ = inventorySlotIndex;
+                quickUseItemY = inventorySlots[inventorySlotIndex].item;
+                OnQuickUseChanged?.Invoke();
+            }
+        }
+        
+        public void SetHotkeyE(int inventorySlotIndex)
+        {
+            if (inventorySlotIndex >= 0 && inventorySlotIndex < inventorySlots.Count)
+            {
+                hotkeySlotE = inventorySlotIndex;
+                quickUseItemX = inventorySlots[inventorySlotIndex].item;
+                OnQuickUseChanged?.Invoke();
+            }
+        }
+        
+        public void ClearHotkeyQ()
+        {
+            hotkeySlotQ = -1;
+            quickUseItemY = null;
+            OnQuickUseChanged?.Invoke();
+        }
+        
+        public void ClearHotkeyE()
+        {
+            hotkeySlotE = -1;
+            quickUseItemX = null;
+            OnQuickUseChanged?.Invoke();
+        }
+        
+        public InventorySlot GetHotkeySlotQ()
+        {
+            if (hotkeySlotQ >= 0 && hotkeySlotQ < inventorySlots.Count)
+                return inventorySlots[hotkeySlotQ];
+            return new InventorySlot(); // Empty slot
+        }
+        
+        public InventorySlot GetHotkeySlotE()
+        {
+            if (hotkeySlotE >= 0 && hotkeySlotE < inventorySlots.Count)
+                return inventorySlots[hotkeySlotE];
+            return new InventorySlot(); // Empty slot
+        }
+        
         // Getters for UI
         public List<InventorySlot> GetInventorySlots() => inventorySlots;
         public EquipmentSlots GetEquipment() => equipment;
@@ -444,5 +497,7 @@ namespace ALittleFolkTale.Characters
         public int GetHotbarSize() => hotbarSize;
         public Item GetQuickUseItemY() => quickUseItemY;
         public Item GetQuickUseItemX() => quickUseItemX;
+        public int GetHotkeySlotQIndex() => hotkeySlotQ;
+        public int GetHotkeySlotEIndex() => hotkeySlotE;
     }
 }

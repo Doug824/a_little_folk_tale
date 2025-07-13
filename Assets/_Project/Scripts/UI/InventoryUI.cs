@@ -44,6 +44,11 @@ namespace ALittleFolkTale.UI
         [SerializeField] private Text quickUseYText;
         [SerializeField] private Text quickUseXText;
         
+        [Header("Hotkey Panel")]
+        [SerializeField] private GameObject hotkeyPanel;
+        [SerializeField] private InventorySlotUI hotkeySlotQ;
+        [SerializeField] private InventorySlotUI hotkeySlotE;
+        
         private Inventory playerInventory;
         private bool isInventoryOpen = false;
         private int selectedSlotIndex = -1;
@@ -141,50 +146,64 @@ namespace ALittleFolkTale.UI
             
             canvasObj.AddComponent<GraphicRaycaster>();
             
-            // Create main inventory panel
-            CreateInventoryPanel();
+            // Create Link's Awakening style layout
+            CreateMainInventoryPanel();
+            CreateHotkeyPanel();
             CreateCharacterPreviewPanel();
             CreateEquipmentPanel();
             CreateQuickUsePanel();
         }
 
-        private void CreateInventoryPanel()
+        private void CreateMainInventoryPanel()
         {
-            inventoryPanel = new GameObject("InventoryPanel");
+            // Main background panel covering most of the screen
+            inventoryPanel = new GameObject("MainInventoryPanel");
             inventoryPanel.transform.SetParent(inventoryCanvas.transform, false);
             
             RectTransform panelRect = inventoryPanel.AddComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.3f, 0.5f);
-            panelRect.anchorMax = new Vector2(0.3f, 0.5f);
-            panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.anchoredPosition = Vector2.zero;
-            panelRect.sizeDelta = new Vector2(300, 400);
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
             
             Image panelImage = inventoryPanel.AddComponent<Image>();
-            panelImage.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            panelImage.color = new Color(0.05f, 0.1f, 0.05f, 0.95f); // Dark green tint like Link's Awakening
             
-            // Create title
-            GameObject title = new GameObject("InventoryTitle");
-            title.transform.SetParent(inventoryPanel.transform, false);
+            // Create the items grid section (left side)
+            GameObject itemsSection = new GameObject("ItemsSection");
+            itemsSection.transform.SetParent(inventoryPanel.transform, false);
             
-            RectTransform titleRect = title.AddComponent<RectTransform>();
+            RectTransform itemsRect = itemsSection.AddComponent<RectTransform>();
+            itemsRect.anchorMin = new Vector2(0.1f, 0.3f);
+            itemsRect.anchorMax = new Vector2(0.5f, 0.9f);
+            itemsRect.offsetMin = Vector2.zero;
+            itemsRect.offsetMax = Vector2.zero;
+            
+            Image itemsImage = itemsSection.AddComponent<Image>();
+            itemsImage.color = new Color(0.2f, 0.25f, 0.2f, 0.8f);
+            
+            // Items title
+            GameObject itemsTitle = new GameObject("ItemsTitle");
+            itemsTitle.transform.SetParent(itemsSection.transform, false);
+            
+            RectTransform titleRect = itemsTitle.AddComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 1);
             titleRect.anchorMax = new Vector2(1, 1);
             titleRect.pivot = new Vector2(0.5f, 1);
             titleRect.anchoredPosition = new Vector2(0, 0);
             titleRect.sizeDelta = new Vector2(0, 40);
             
-            Text titleText = title.AddComponent<Text>();
-            titleText.text = "Bag";
-            titleText.fontSize = 24;
-            titleText.color = Color.white;
+            Text titleText = itemsTitle.AddComponent<Text>();
+            titleText.text = "ITEMS";
+            titleText.fontSize = 20;
+            titleText.color = new Color(0.9f, 0.9f, 0.7f); // Cream color like Link's Awakening
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.fontStyle = FontStyle.Bold;
             titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
             // Create inventory grid
             GameObject gridObj = new GameObject("InventoryGrid");
-            gridObj.transform.SetParent(inventoryPanel.transform, false);
+            gridObj.transform.SetParent(itemsSection.transform, false);
             
             RectTransform gridRect = gridObj.AddComponent<RectTransform>();
             gridRect.anchorMin = new Vector2(0, 0);
@@ -198,27 +217,127 @@ namespace ALittleFolkTale.UI
             grid.spacing = new Vector2(slotSpacing, slotSpacing);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = inventoryColumns;
+            grid.childAlignment = TextAnchor.UpperCenter;
             
             inventoryGrid = gridRect;
+        }
+        
+        private void CreateHotkeyPanel()
+        {
+            // Hotkey assignment area (bottom center)
+            hotkeyPanel = new GameObject("HotkeyPanel");
+            hotkeyPanel.transform.SetParent(inventoryPanel.transform, false);
+            
+            RectTransform hotkeyRect = hotkeyPanel.AddComponent<RectTransform>();
+            hotkeyRect.anchorMin = new Vector2(0.1f, 0.05f);
+            hotkeyRect.anchorMax = new Vector2(0.9f, 0.25f);
+            hotkeyRect.offsetMin = Vector2.zero;
+            hotkeyRect.offsetMax = Vector2.zero;
+            
+            Image hotkeyImage = hotkeyPanel.AddComponent<Image>();
+            hotkeyImage.color = new Color(0.15f, 0.2f, 0.15f, 0.8f);
+            
+            // Hotkey title
+            GameObject hotkeyTitle = new GameObject("HotkeyTitle");
+            hotkeyTitle.transform.SetParent(hotkeyPanel.transform, false);
+            
+            RectTransform titleRect = hotkeyTitle.AddComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 1);
+            titleRect.anchorMax = new Vector2(1, 1);
+            titleRect.pivot = new Vector2(0.5f, 1);
+            titleRect.anchoredPosition = new Vector2(0, 0);
+            titleRect.sizeDelta = new Vector2(0, 30);
+            
+            Text titleText = hotkeyTitle.AddComponent<Text>();
+            titleText.text = "SELECT WITH Q AND E";
+            titleText.fontSize = 16;
+            titleText.color = new Color(0.9f, 0.9f, 0.7f);
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.fontStyle = FontStyle.Bold;
+            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            
+            // Create Q slot
+            GameObject qSlotContainer = new GameObject("QSlotContainer");
+            qSlotContainer.transform.SetParent(hotkeyPanel.transform, false);
+            
+            RectTransform qContainerRect = qSlotContainer.AddComponent<RectTransform>();
+            qContainerRect.anchorMin = new Vector2(0.2f, 0.2f);
+            qContainerRect.anchorMax = new Vector2(0.2f, 0.2f);
+            qContainerRect.pivot = new Vector2(0.5f, 0.5f);
+            qContainerRect.anchoredPosition = Vector2.zero;
+            qContainerRect.sizeDelta = new Vector2(100, 80);
+            
+            // Q button label
+            GameObject qLabel = new GameObject("QLabel");
+            qLabel.transform.SetParent(qSlotContainer.transform, false);
+            
+            RectTransform qLabelRect = qLabel.AddComponent<RectTransform>();
+            qLabelRect.anchorMin = new Vector2(0, 0);
+            qLabelRect.anchorMax = new Vector2(1, 0);
+            qLabelRect.pivot = new Vector2(0.5f, 0);
+            qLabelRect.anchoredPosition = new Vector2(0, -10);
+            qLabelRect.sizeDelta = new Vector2(0, 20);
+            
+            Text qLabelText = qLabel.AddComponent<Text>();
+            qLabelText.text = "Q";
+            qLabelText.fontSize = 14;
+            qLabelText.color = new Color(1f, 1f, 0.5f); // Yellow
+            qLabelText.alignment = TextAnchor.MiddleCenter;
+            qLabelText.fontStyle = FontStyle.Bold;
+            qLabelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            
+            // Create E slot
+            GameObject eSlotContainer = new GameObject("ESlotContainer");
+            eSlotContainer.transform.SetParent(hotkeyPanel.transform, false);
+            
+            RectTransform eContainerRect = eSlotContainer.AddComponent<RectTransform>();
+            eContainerRect.anchorMin = new Vector2(0.8f, 0.2f);
+            eContainerRect.anchorMax = new Vector2(0.8f, 0.2f);
+            eContainerRect.pivot = new Vector2(0.5f, 0.5f);
+            eContainerRect.anchoredPosition = Vector2.zero;
+            eContainerRect.sizeDelta = new Vector2(100, 80);
+            
+            // E button label
+            GameObject eLabel = new GameObject("ELabel");
+            eLabel.transform.SetParent(eSlotContainer.transform, false);
+            
+            RectTransform eLabelRect = eLabel.AddComponent<RectTransform>();
+            eLabelRect.anchorMin = new Vector2(0, 0);
+            eLabelRect.anchorMax = new Vector2(1, 0);
+            eLabelRect.pivot = new Vector2(0.5f, 0);
+            eLabelRect.anchoredPosition = new Vector2(0, -10);
+            eLabelRect.sizeDelta = new Vector2(0, 20);
+            
+            Text eLabelText = eLabel.AddComponent<Text>();
+            eLabelText.text = "E";
+            eLabelText.fontSize = 14;
+            eLabelText.color = new Color(1f, 1f, 0.5f); // Yellow
+            eLabelText.alignment = TextAnchor.MiddleCenter;
+            eLabelText.fontStyle = FontStyle.Bold;
+            eLabelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            
+            // Create actual hotkey slots
+            hotkeySlotQ = CreateHotkeySlot(qSlotContainer, "Q", -100);
+            hotkeySlotE = CreateHotkeySlot(eSlotContainer, "E", -101);
         }
 
         private void CreateCharacterPreviewPanel()
         {
+            // Character section (right side, like Link's Awakening)
             characterPreviewPanel = new GameObject("CharacterPreviewPanel");
-            characterPreviewPanel.transform.SetParent(inventoryCanvas.transform, false);
+            characterPreviewPanel.transform.SetParent(inventoryPanel.transform, false);
             
             RectTransform previewRect = characterPreviewPanel.AddComponent<RectTransform>();
-            previewRect.anchorMin = new Vector2(0.7f, 0.5f);
-            previewRect.anchorMax = new Vector2(0.7f, 0.5f);
-            previewRect.pivot = new Vector2(0.5f, 0.5f);
-            previewRect.anchoredPosition = Vector2.zero;
-            previewRect.sizeDelta = new Vector2(400, 400);
+            previewRect.anchorMin = new Vector2(0.55f, 0.3f);
+            previewRect.anchorMax = new Vector2(0.9f, 0.9f);
+            previewRect.offsetMin = Vector2.zero;
+            previewRect.offsetMax = Vector2.zero;
             
             Image previewBg = characterPreviewPanel.AddComponent<Image>();
-            previewBg.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+            previewBg.color = new Color(0.2f, 0.25f, 0.2f, 0.8f);
             
             // Character preview title
-            GameObject previewTitle = new GameObject("PreviewTitle");
+            GameObject previewTitle = new GameObject("CharacterTitle");
             previewTitle.transform.SetParent(characterPreviewPanel.transform, false);
             
             RectTransform titleRect = previewTitle.AddComponent<RectTransform>();
@@ -229,26 +348,42 @@ namespace ALittleFolkTale.UI
             titleRect.sizeDelta = new Vector2(0, 40);
             
             Text titleText = previewTitle.AddComponent<Text>();
-            titleText.text = "Equipment";
-            titleText.fontSize = 24;
-            titleText.color = Color.white;
+            titleText.text = "LINK";
+            titleText.fontSize = 20;
+            titleText.color = new Color(0.9f, 0.9f, 0.7f);
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.fontStyle = FontStyle.Bold;
             titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
-            // Character preview window
+            // Character preview window (center of panel)
             GameObject previewWindow = new GameObject("CharacterPreview");
             previewWindow.transform.SetParent(characterPreviewPanel.transform, false);
             
             RectTransform windowRect = previewWindow.AddComponent<RectTransform>();
-            windowRect.anchorMin = new Vector2(0.5f, 0.5f);
-            windowRect.anchorMax = new Vector2(0.5f, 0.5f);
-            windowRect.pivot = new Vector2(0.5f, 0.5f);
-            windowRect.anchoredPosition = new Vector2(0, 0);
-            windowRect.sizeDelta = new Vector2(200, 200);
+            windowRect.anchorMin = new Vector2(0.2f, 0.3f);
+            windowRect.anchorMax = new Vector2(0.8f, 0.8f);
+            windowRect.offsetMin = Vector2.zero;
+            windowRect.offsetMax = Vector2.zero;
             
             characterPreviewImage = previewWindow.AddComponent<RawImage>();
-            characterPreviewImage.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            characterPreviewImage.color = new Color(0.3f, 0.4f, 0.3f, 1f); // Placeholder color
+            
+            // Add simple character placeholder
+            GameObject placeholder = new GameObject("CharacterPlaceholder");
+            placeholder.transform.SetParent(previewWindow.transform, false);
+            
+            RectTransform placeholderRect = placeholder.AddComponent<RectTransform>();
+            placeholderRect.anchorMin = Vector2.zero;
+            placeholderRect.anchorMax = Vector2.one;
+            placeholderRect.offsetMin = Vector2.zero;
+            placeholderRect.offsetMax = Vector2.zero;
+            
+            Text placeholderText = placeholder.AddComponent<Text>();
+            placeholderText.text = "♦";
+            placeholderText.fontSize = 48;
+            placeholderText.color = new Color(0.9f, 0.9f, 0.7f);
+            placeholderText.alignment = TextAnchor.MiddleCenter;
+            placeholderText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         }
         
         private void CreateEquipmentPanel()
@@ -279,6 +414,62 @@ namespace ALittleFolkTale.UI
             GameObject xSlot = CreateQuickUseSlot("X/E", new Vector2(-20, -40));
             quickUseXIcon = xSlot.transform.Find("Icon").GetComponent<Image>();
             quickUseXText = xSlot.transform.Find("ButtonText").GetComponent<Text>();
+        }
+        
+        private InventorySlotUI CreateHotkeySlot(GameObject parent, string keyName, int slotIndex)
+        {
+            GameObject slotObj = new GameObject($"HotkeySlot_{keyName}");
+            slotObj.transform.SetParent(parent.transform, false);
+            
+            RectTransform slotRect = slotObj.AddComponent<RectTransform>();
+            slotRect.anchorMin = new Vector2(0.5f, 0.5f);
+            slotRect.anchorMax = new Vector2(0.5f, 0.5f);
+            slotRect.pivot = new Vector2(0.5f, 0.5f);
+            slotRect.anchoredPosition = new Vector2(0, 10);
+            slotRect.sizeDelta = new Vector2(60, 60);
+            
+            Image slotImage = slotObj.AddComponent<Image>();
+            slotImage.color = new Color(0.4f, 0.4f, 0.3f, 0.9f);
+            slotImage.raycastTarget = true;
+            
+            Button slotButton = slotObj.AddComponent<Button>();
+            
+            // Create item icon
+            GameObject iconObj = new GameObject("ItemIcon");
+            iconObj.transform.SetParent(slotObj.transform, false);
+            
+            RectTransform iconRect = iconObj.AddComponent<RectTransform>();
+            iconRect.anchorMin = Vector2.zero;
+            iconRect.anchorMax = Vector2.one;
+            iconRect.offsetMin = new Vector2(5, 5);
+            iconRect.offsetMax = new Vector2(-5, -5);
+            
+            Image iconImage = iconObj.AddComponent<Image>();
+            iconImage.color = Color.clear;
+            iconImage.raycastTarget = false;
+            
+            // Create quantity text (though hotkeys typically don't show quantity)
+            GameObject quantityObj = new GameObject("QuantityText");
+            quantityObj.transform.SetParent(slotObj.transform, false);
+            
+            RectTransform quantityRect = quantityObj.AddComponent<RectTransform>();
+            quantityRect.anchorMin = new Vector2(1, 0);
+            quantityRect.anchorMax = new Vector2(1, 0);
+            quantityRect.pivot = new Vector2(1, 0);
+            quantityRect.anchoredPosition = new Vector2(-5, 5);
+            quantityRect.sizeDelta = new Vector2(20, 15);
+            
+            Text quantityText = quantityObj.AddComponent<Text>();
+            quantityText.fontSize = 10;
+            quantityText.color = Color.white;
+            quantityText.alignment = TextAnchor.MiddleRight;
+            quantityText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            quantityText.raycastTarget = false;
+            
+            InventorySlotUI slotUI = slotObj.AddComponent<InventorySlotUI>();
+            slotUI.Initialize(slotIndex, iconImage, quantityText, slotButton, false);
+            
+            return slotUI;
         }
         
         private GameObject CreateQuickUseSlot(string buttonText, Vector2 position)
@@ -344,10 +535,13 @@ namespace ALittleFolkTale.UI
             playerInventory.OnInventoryChanged += RefreshInventoryDisplay;
             playerInventory.OnEquipmentChanged += RefreshEquipmentDisplay;
             playerInventory.OnQuickUseChanged += RefreshQuickUseDisplay;
+            playerInventory.OnInventoryChanged += RefreshHotkeyDisplay;
+            playerInventory.OnQuickUseChanged += RefreshHotkeyDisplay;
             
             RefreshInventoryDisplay();
             RefreshEquipmentDisplay();
             RefreshQuickUseDisplay();
+            RefreshHotkeyDisplay();
         }
 
         private InventorySlotUI CreateInventorySlot(int slotIndex, Transform parent, bool isHotbar = false)
@@ -427,28 +621,31 @@ namespace ALittleFolkTale.UI
 
         private void CreateEquipmentSlots()
         {
-            // Equipment slots positioned around character preview
-            // Weapon slot (left side)
-            weaponSlot = CreateEquipmentSlot("Weapon", new Vector2(-150, 0), EquipmentSlot.MainHand);
+            // Equipment slots positioned around character preview (Link's Awakening style)
+            // Weapon slot (left side of character)
+            weaponSlot = CreateEquipmentSlot("Sword", new Vector2(-80, 0), EquipmentSlot.MainHand);
             
-            // Armor slot (top)
-            armorSlot = CreateEquipmentSlot("Armor", new Vector2(0, 150), EquipmentSlot.Armor);
+            // Shield slot (right side of character) 
+            armorSlot = CreateEquipmentSlot("Shield", new Vector2(80, 0), EquipmentSlot.Armor);
             
-            // Accessory slot (right side)
-            accessorySlot = CreateEquipmentSlot("Accessory", new Vector2(150, 0), EquipmentSlot.Accessory);
+            // Accessory slot (below character)
+            accessorySlot = CreateEquipmentSlot("Item", new Vector2(0, -80), EquipmentSlot.Accessory);
         }
 
         private EquipmentSlotUI CreateEquipmentSlot(string slotName, Vector2 position, EquipmentSlot slotType)
         {
             GameObject slotObj = new GameObject($"{slotName}Slot");
-            slotObj.transform.SetParent(equipmentPanel, false);
+            slotObj.transform.SetParent(characterPreviewPanel.transform, false);
             
             RectTransform slotRect = slotObj.AddComponent<RectTransform>();
+            slotRect.anchorMin = new Vector2(0.5f, 0.5f);
+            slotRect.anchorMax = new Vector2(0.5f, 0.5f);
+            slotRect.pivot = new Vector2(0.5f, 0.5f);
             slotRect.anchoredPosition = position;
-            slotRect.sizeDelta = new Vector2(60, 60);
+            slotRect.sizeDelta = new Vector2(50, 50);
             
             Image slotImage = slotObj.AddComponent<Image>();
-            slotImage.color = new Color(0.2f, 0.4f, 0.2f, 0.8f);
+            slotImage.color = new Color(0.4f, 0.4f, 0.3f, 0.9f); // Link's Awakening style color
             
             Button slotButton = slotObj.AddComponent<Button>();
             
@@ -459,26 +656,31 @@ namespace ALittleFolkTale.UI
             RectTransform iconRect = iconObj.AddComponent<RectTransform>();
             iconRect.anchorMin = Vector2.zero;
             iconRect.anchorMax = Vector2.one;
-            iconRect.offsetMin = Vector2.zero;
-            iconRect.offsetMax = Vector2.zero;
+            iconRect.offsetMin = new Vector2(3, 3);
+            iconRect.offsetMax = new Vector2(-3, -3);
             
             Image iconImage = iconObj.AddComponent<Image>();
             iconImage.color = Color.clear;
+            iconImage.raycastTarget = false;
             
-            // Create label
+            // Create label below slot
             GameObject labelObj = new GameObject("SlotLabel");
             labelObj.transform.SetParent(slotObj.transform, false);
             
             RectTransform labelRect = labelObj.AddComponent<RectTransform>();
-            labelRect.anchoredPosition = new Vector2(0, -35);
-            labelRect.sizeDelta = new Vector2(80, 20);
+            labelRect.anchorMin = new Vector2(0, 0);
+            labelRect.anchorMax = new Vector2(1, 0);
+            labelRect.pivot = new Vector2(0.5f, 1);
+            labelRect.anchoredPosition = new Vector2(0, -5);
+            labelRect.sizeDelta = new Vector2(0, 15);
             
             Text labelText = labelObj.AddComponent<Text>();
-            labelText.text = slotName;
-            labelText.fontSize = 10;
-            labelText.color = Color.white;
+            labelText.text = slotName.ToUpper();
+            labelText.fontSize = 8;
+            labelText.color = new Color(0.9f, 0.9f, 0.7f);
             labelText.alignment = TextAnchor.MiddleCenter;
             labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            labelText.raycastTarget = false;
             
             EquipmentSlotUI slotUI = slotObj.AddComponent<EquipmentSlotUI>();
             slotUI.Initialize(slotType, iconImage, slotButton);
@@ -664,9 +866,54 @@ namespace ALittleFolkTale.UI
         {
             if (playerInventory == null) return;
             
+            // Handle hotkey slot assignments
+            if (toSlot == -100) // Q hotkey slot
+            {
+                AssignToHotkeyQ(fromSlot);
+                return;
+            }
+            else if (toSlot == -101) // E hotkey slot
+            {
+                AssignToHotkeyE(fromSlot);
+                return;
+            }
+            
+            // Handle regular inventory swapping
             if (playerInventory.MoveItem(fromSlot, toSlot))
             {
                 Debug.Log($"Moved/swapped items between slot {fromSlot} and slot {toSlot}");
+            }
+        }
+        
+        private void AssignToHotkeyQ(int inventorySlotIndex)
+        {
+            if (playerInventory == null) return;
+            
+            var item = playerInventory.GetItem(inventorySlotIndex);
+            if (item != null && item.Data.isConsumable)
+            {
+                playerInventory.SetHotkeyQ(inventorySlotIndex);
+                Debug.Log($"Assigned {item.Data.itemName} to Q hotkey");
+            }
+            else
+            {
+                Debug.Log("Cannot assign non-consumable item to hotkey");
+            }
+        }
+        
+        private void AssignToHotkeyE(int inventorySlotIndex)
+        {
+            if (playerInventory == null) return;
+            
+            var item = playerInventory.GetItem(inventorySlotIndex);
+            if (item != null && item.Data.isConsumable)
+            {
+                playerInventory.SetHotkeyE(inventorySlotIndex);
+                Debug.Log($"Assigned {item.Data.itemName} to E hotkey");
+            }
+            else
+            {
+                Debug.Log("Cannot assign non-consumable item to hotkey");
             }
         }
         
@@ -727,6 +974,23 @@ namespace ALittleFolkTale.UI
                         playerInventory.UseConsumable(selectedSlotIndex);
                     }
                 }
+            }
+        }
+        
+        private void RefreshHotkeyDisplay()
+        {
+            if (playerInventory == null) return;
+            
+            // Update Q hotkey slot
+            if (hotkeySlotQ != null)
+            {
+                hotkeySlotQ.UpdateDisplay(playerInventory.GetHotkeySlotQ());
+            }
+            
+            // Update E hotkey slot
+            if (hotkeySlotE != null)
+            {
+                hotkeySlotE.UpdateDisplay(playerInventory.GetHotkeySlotE());
             }
         }
     }
