@@ -9,10 +9,15 @@ namespace ALittleFolkTale.Core
         [SerializeField] private string targetTag = "Player";
 
         [Header("Camera Settings")]
-        [SerializeField] private float cameraHeight = 15f;
-        [SerializeField] private float cameraDistance = 10f;
-        [SerializeField] private float cameraAngle = 45f;
-        [SerializeField] private float smoothSpeed = 5f;
+        [SerializeField] private float cameraHeight = 12f;
+        [SerializeField] private float cameraDistance = 8f;
+        [SerializeField] private float cameraAngle = 40f;
+        [SerializeField] private float smoothSpeed = 8f;
+        
+        [Header("Camera Shake")]
+        [SerializeField] private float shakeDuration = 0f;
+        [SerializeField] private float shakeAmount = 0.3f;
+        [SerializeField] private float decreaseFactor = 1.0f;
 
         [Header("Bounds")]
         [SerializeField] private bool useBounds = false;
@@ -21,19 +26,60 @@ namespace ALittleFolkTale.Core
 
         private Vector3 offset;
         private Vector3 velocity = Vector3.zero;
+        private Vector3 originalPosition;
+        
+        // Singleton instance
+        private static CameraController instance;
+        public static CameraController Instance
+        {
+            get
+            {
+                if (instance == null)
+                    instance = FindFirstObjectByType<CameraController>();
+                return instance;
+            }
+        }
 
+        private void Awake()
+        {
+            instance = this;
+        }
+        
         private void Start()
         {
             if (target == null)
+            {
+                FindTarget();
+            }
+
+            CalculateOffset();
+            
+            // Snap to initial position without smoothing
+            if (target != null)
+            {
+                transform.position = target.position + offset;
+            }
+        }
+        
+        private void FindTarget()
+        {
+            // Try to find by tag first
+            if (!string.IsNullOrEmpty(targetTag))
             {
                 GameObject player = GameObject.FindGameObjectWithTag(targetTag);
                 if (player != null)
                 {
                     target = player.transform;
+                    return;
                 }
             }
-
-            CalculateOffset();
+            
+            // Fallback to finding PlayerController
+            var playerController = FindFirstObjectByType<Characters.PlayerController>();
+            if (playerController != null)
+            {
+                target = playerController.transform;
+            }
         }
 
         private void CalculateOffset()
@@ -50,15 +96,8 @@ namespace ALittleFolkTale.Core
         {
             if (target == null)
             {
-                GameObject player = GameObject.FindGameObjectWithTag(targetTag);
-                if (player != null)
-                {
-                    target = player.transform;
-                }
-                else
-                {
-                    return;
-                }
+                FindTarget();
+                return;
             }
 
             Vector3 desiredPosition = target.position + offset;
@@ -69,7 +108,19 @@ namespace ALittleFolkTale.Core
                 desiredPosition.z = Mathf.Clamp(desiredPosition.z, minBounds.y, maxBounds.y);
             }
 
+            // Smooth camera movement
             transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref velocity, 1f / smoothSpeed);
+            
+            // Apply camera shake if active
+            if (shakeDuration > 0)
+            {
+                transform.position += Random.insideUnitSphere * shakeAmount;
+                shakeDuration -= Time.deltaTime * decreaseFactor;
+            }
+            else
+            {
+                shakeDuration = 0f;
+            }
         }
 
         public void SetTarget(Transform newTarget)
@@ -82,6 +133,31 @@ namespace ALittleFolkTale.Core
             minBounds = min;
             maxBounds = max;
             useBounds = true;
+        }
+        
+        public void ShakeCamera(float duration = 0.5f, float amount = 0.3f)
+        {
+            shakeDuration = duration;
+            shakeAmount = amount;
+        }
+        
+        public void QuickShake()
+        {
+            ShakeCamera(0.2f, 0.2f);
+        }
+        
+        public void HeavyShake()
+        {
+            ShakeCamera(0.5f, 0.5f);
+        }
+        
+        public void UpdateCameraSettings(float? height = null, float? distance = null, float? angle = null)
+        {
+            if (height.HasValue) cameraHeight = height.Value;
+            if (distance.HasValue) cameraDistance = distance.Value;
+            if (angle.HasValue) cameraAngle = angle.Value;
+            
+            CalculateOffset();
         }
 
         private void OnDrawGizmosSelected()

@@ -431,6 +431,12 @@ namespace ALittleFolkTale.Characters
                     // Play hit sound
                     PlaySoundPlaceholder("Attack Hit", 0.5f);
                     
+                    // Camera shake on hit
+                    if (Core.CameraController.Instance != null)
+                    {
+                        Core.CameraController.Instance.QuickShake();
+                    }
+                    
                     // Apply damage
                     if (enemy != null)
                     {
@@ -647,6 +653,12 @@ namespace ALittleFolkTale.Characters
             // Play damage sound and effect
             PlaySoundPlaceholder("Player Hit", 0.6f);
             CreateDamageEffect();
+            
+            // Camera shake on damage
+            if (Core.CameraController.Instance != null)
+            {
+                Core.CameraController.Instance.HeavyShake();
+            }
             
             // Debug.Log($"Player took {damage} damage! Health: {currentHealth}/{maxHealth}");
             
