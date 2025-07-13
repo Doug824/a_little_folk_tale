@@ -201,7 +201,6 @@ namespace ALittleFolkTale.Characters
         {
             if (attackTimer <= 0f && currentStamina >= attackStaminaCost && !isRolling && !isAttacking)
             {
-                Debug.Log("🗡️ Player attacked!");
                 PerformAttack();
                 currentStamina -= attackStaminaCost;
                 attackTimer = attackCooldown;
@@ -214,17 +213,12 @@ namespace ALittleFolkTale.Characters
                     animator.SetBool("IsAttacking", true);
                 }
             }
-            else
-            {
-                Debug.Log($"❌ Attack blocked - Timer:{attackTimer:F1} Stamina:{currentStamina:F0}/{attackStaminaCost} Rolling:{isRolling} Attacking:{isAttacking}");
-            }
         }
         
         private void TryRoll()
         {
             if (!isRolling && rollCooldownTimer <= 0f && currentStamina >= rollStaminaCost && movementDirection.magnitude > 0.1f)
             {
-                Debug.Log("🎯 Player rolled!");
                 isRolling = true;
                 rollTimer = rollDuration;
                 rollDirection = movementDirection.normalized;
@@ -238,10 +232,6 @@ namespace ALittleFolkTale.Characters
                 {
                     animator.SetBool("IsRolling", true);
                 }
-            }
-            else
-            {
-                Debug.Log($"❌ Roll blocked - Rolling:{isRolling} Cooldown:{rollCooldownTimer:F1} Stamina:{currentStamina:F0}/{rollStaminaCost} Movement:{movementDirection.magnitude:F1}");
             }
         }
         
@@ -445,7 +435,7 @@ namespace ALittleFolkTale.Characters
                     if (enemy != null)
                     {
                         enemy.TakeDamage(attackDamage);
-                        Debug.Log($"Hit {col.name} for {attackDamage} damage!");
+                        // Debug.Log($"Hit {col.name} for {attackDamage} damage!");
                     }
                     else
                     {
@@ -642,7 +632,7 @@ namespace ALittleFolkTale.Characters
         
         private void PlaySoundPlaceholder(string soundName, float volume)
         {
-            Debug.Log($"🔊 SOUND: {soundName} (Volume: {volume:F1})");
+            // Debug.Log($"🔊 SOUND: {soundName} (Volume: {volume:F1})");
             
             // TODO: Replace with actual AudioManager.Instance.PlaySFX(soundName, volume);
             // For now, we'll create a simple audio placeholder system
@@ -658,7 +648,7 @@ namespace ALittleFolkTale.Characters
             PlaySoundPlaceholder("Player Hit", 0.6f);
             CreateDamageEffect();
             
-            Debug.Log($"Player took {damage} damage! Health: {currentHealth}/{maxHealth}");
+            // Debug.Log($"Player took {damage} damage! Health: {currentHealth}/{maxHealth}");
             
             if (currentHealth <= 0)
             {
